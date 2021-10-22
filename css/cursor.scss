@@ -1,0 +1,14 @@
+.behind-cursor[data-extension="Aki"] {
+	position: fixed;
+	display: block;
+	border-color: #fff9c4;
+	border-style: solid;
+	border-width: 3px;
+	box-shadow: 0px 0px 15px -3px #fff9c4;
+	z-index: 2147483647;
+	user-select: none;
+	pointer-events: none;
+	transition-property: top, left, width, height, transform;
+	transition-timing-function: ease-out;
+	box-sizing: border-box !important;
+}

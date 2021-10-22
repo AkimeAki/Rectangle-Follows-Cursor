@@ -1,0 +1,24 @@
+{
+	"manifest_version": 2,
+	"name": "カーソルを追従する四角いの",
+	"version": "1.0.0",
+	"description": "後ろから四角いのが付いてきます。\nクリックできる部分に重なると枠を囲ってくれます。",
+	"icons": {
+		"16": "icons/icon16.png",
+		"48": "icons/icon48.png",
+		"128": "icons/icon128.png"
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"<all_urls>"
+			],
+			"js": [
+				"./js/cursor.js"
+			],
+			"css": [
+				"./css/cursor.css"
+			]
+		}
+	]
+}
