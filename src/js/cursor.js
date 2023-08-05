@@ -102,6 +102,9 @@
 	let transform = "";
 	let toAnimationName = "";
 	let status = "normal";
+	let clientX = 0;
+	let clientY = 0;
+	let target = null;
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
@@ -129,47 +132,55 @@
 		toAnimationName = toName;
 	};
 
-	const pointer = (event) => {
-		let x = event.clientX + 27;
-		let y = event.clientY + 27;
-		cursor.style.opacity = 1;
-
-		const style = getComputedStyle(cursor);
-		if (getComputedStyle(event.target).cursor === "pointer") {
-			if (status !== "pointer") {
-				// 遷移前の形状を記憶
-				transform = style.getPropertyValue("transform");
-				cursor.style.setProperty("--currentTransform", transform);
-
-				// 遷移アニメーションを実行
-				cursor.style.animationName = `toPointer-${hash}`;
-				toAnimation(`pointer-${hash}`);
-			}
-
-			status = "pointer";
-			x = event.clientX - pointerSize / 2;
-			y = event.clientY - pointerSize / 2;
+	const pointer = () => {
+		if (target === null) {
+			cursor.style.opacity = 0;
 		} else {
-			if (status !== "normal") {
-				// 遷移前の形状を記憶
-				transform = style.getPropertyValue("transform");
-				cursor.style.setProperty("--currentTransform", transform);
+			cursor.style.opacity = 1;
+			let x = clientX + 27;
+			let y = clientY + 27;
 
-				// 遷移アニメーションを実行
-				cursor.style.animationName = `toMove-${hash}`;
-				toAnimation(`move-${hash}`);
+			const style = getComputedStyle(cursor);
+			if (getComputedStyle(target).cursor === "pointer") {
+				if (status !== "pointer") {
+					// 遷移前の形状を記憶
+					transform = style.getPropertyValue("transform");
+					cursor.style.setProperty("--currentTransform", transform);
+
+					// 遷移アニメーションを実行
+					cursor.style.animationName = `toPointer-${hash}`;
+					toAnimation(`pointer-${hash}`);
+				}
+
+				status = "pointer";
+				x = clientX - pointerSize / 2;
+				y = clientY - pointerSize / 2;
+			} else {
+				if (status !== "normal") {
+					// 遷移前の形状を記憶
+					transform = style.getPropertyValue("transform");
+					cursor.style.setProperty("--currentTransform", transform);
+
+					// 遷移アニメーションを実行
+					cursor.style.animationName = `toMove-${hash}`;
+					toAnimation(`move-${hash}`);
+				}
+				status = "normal";
 			}
-			status = "normal";
+
+			cursor.style.top = `${y}px`;
+			cursor.style.left = `${x}px`;
 		}
 
-		cursor.style.top = `${y}px`;
-		cursor.style.left = `${x}px`;
+		requestAnimationFrame(pointer);
 	};
 
 	document.addEventListener(
 		"mousemove",
 		(event) => {
-			pointer(event);
+			clientX = event.clientX;
+			clientY = event.clientY;
+			target = event.target;
 		},
 		false
 	);
@@ -181,4 +192,6 @@
 		},
 		false
 	);
+
+	pointer();
 })();
