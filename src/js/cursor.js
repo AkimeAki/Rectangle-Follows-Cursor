@@ -105,6 +105,7 @@
 	let clientX = 0;
 	let clientY = 0;
 	let target = null;
+	let mouseleave = true;
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
@@ -135,7 +136,7 @@
 	const pointer = () => {
 		if (target === null) {
 			cursor.style.opacity = 0;
-		} else {
+		} else if (!mouseleave) {
 			cursor.style.opacity = 1;
 			let x = clientX + 27;
 			let y = clientY + 27;
@@ -181,6 +182,7 @@
 			clientX = event.clientX;
 			clientY = event.clientY;
 			target = event.target;
+			mouseleave = false;
 		},
 		false
 	);
@@ -189,6 +191,7 @@
 		"mouseleave",
 		() => {
 			cursor.style.opacity = 0;
+			mouseleave = true;
 		},
 		false
 	);
