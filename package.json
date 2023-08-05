@@ -1,0 +1,15 @@
+{
+	"name": "rectangle-follows-cursor",
+	"version": "2.0.0",
+	"private": true,
+	"scripts": {
+		"lint": "eslint './src/**/*.{js,jsx,ts,tsx}'",
+		"lint:fix": "npm run lint -- --fix; prettier --write './**/*'"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"eslint": "^8.45.0",
+		"eslint-config-prettier": "^8.8.0",
+		"prettier": "^2.8.8"
+	}
+}

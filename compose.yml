@@ -1,0 +1,15 @@
+services:
+  extension:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    tty: true
+    stdin_open: true
+    init: true
+    environment:
+      TZ: Asia/Tokyo
+      CHOKIDAR_USEPOLLING: 1
+      HOST: 0.0.0.0
+    working_dir: /extension/
+    volumes:
+      - ./:/extension/
