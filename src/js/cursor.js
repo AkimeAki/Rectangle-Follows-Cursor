@@ -135,6 +135,10 @@
 	};
 
 	const pointer = () => {
+		if (mouseleave) {
+			cursor.style.opacity = 0;
+		}
+
 		if (target === null) {
 			cursor.style.opacity = 0;
 		} else if (!mouseleave) {
@@ -196,6 +200,10 @@
 			clientY = event.clientY;
 			target = event.target;
 			mouseleave = false;
+
+			if (event.target.nodeName === "IFRAME" || event.target.localName === "iframe") {
+				mouseleave = true;
+			}
 		},
 		false
 	);
@@ -203,7 +211,6 @@
 	document.body.addEventListener(
 		"mouseleave",
 		() => {
-			cursor.style.opacity = 0;
 			mouseleave = true;
 		},
 		false
