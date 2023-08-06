@@ -106,6 +106,7 @@
 	let clientY = 0;
 	let target = null;
 	let mouseleave = true;
+	let pointerTimerId = null;
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
@@ -143,6 +144,11 @@
 
 			const style = getComputedStyle(cursor);
 			if (getComputedStyle(target).cursor === "pointer") {
+				if (pointerTimerId !== null) {
+					clearTimeout(pointerTimerId);
+					pointerTimerId = null;
+				}
+
 				if (status !== "pointer") {
 					// 遷移前の形状を記憶
 					transform = style.getPropertyValue("transform");
@@ -154,19 +160,26 @@
 				}
 
 				status = "pointer";
+			} else {
+				if (pointerTimerId === null) {
+					pointerTimerId = setTimeout(() => {
+						if (status !== "normal") {
+							// 遷移前の形状を記憶
+							transform = style.getPropertyValue("transform");
+							cursor.style.setProperty("--currentTransform", transform);
+
+							// 遷移アニメーションを実行
+							cursor.style.animationName = `toMove-${hash}`;
+							toAnimation(`move-${hash}`);
+						}
+						status = "normal";
+					}, 350);
+				}
+			}
+
+			if (status === "pointer") {
 				x = clientX - pointerSize / 2;
 				y = clientY - pointerSize / 2;
-			} else {
-				if (status !== "normal") {
-					// 遷移前の形状を記憶
-					transform = style.getPropertyValue("transform");
-					cursor.style.setProperty("--currentTransform", transform);
-
-					// 遷移アニメーションを実行
-					cursor.style.animationName = `toMove-${hash}`;
-					toAnimation(`move-${hash}`);
-				}
-				status = "normal";
 			}
 
 			cursor.style.top = `${y}px`;
