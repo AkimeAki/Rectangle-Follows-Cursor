@@ -107,6 +107,7 @@
 	let target = null;
 	let mouseleave = true;
 	let pointerTimerId = null;
+	let fullscreen = false;
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
@@ -199,7 +200,9 @@
 			clientX = event.clientX;
 			clientY = event.clientY;
 			target = event.target;
-			mouseleave = false;
+			if (!fullscreen) {
+				mouseleave = false;
+			}
 
 			if (event.target.nodeName === "IFRAME" || event.target.localName === "iframe") {
 				mouseleave = true;
@@ -215,6 +218,16 @@
 		},
 		false
 	);
+
+	document.addEventListener("fullscreenchange", () => {
+		if (document.fullscreenElement) {
+			fullscreen = true;
+			mouseleave = true;
+		} else {
+			fullscreen = false;
+			mouseleave = false;
+		}
+	});
 
 	pointer();
 })();
