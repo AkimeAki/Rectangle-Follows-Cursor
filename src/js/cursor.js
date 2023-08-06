@@ -118,13 +118,14 @@
 		cursor.style.animationIterationCount = "";
 		if (status === "pointer") {
 			cursor.style.animationTimingFunction = "linear";
+			cursor.style.animationDirection = "normal";
 		} else {
 			cursor.style.transitionDuration = "";
 		}
 	});
 
 	const toAnimation = (toName) => {
-		cursor.style.animationTimingFunction = "ease";
+		cursor.style.animationTimingFunction = "ease-out";
 		cursor.style.animationDirection = "normal";
 		cursor.style.animationDuration = "500ms";
 		cursor.style.animationIterationCount = 1;
