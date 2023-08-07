@@ -34,7 +34,7 @@
 			animation-duration: 10s;
 			animation-iteration-count: infinite;
 			animation-direction: alternate;
-			animation-timing-function: ease;
+			animation-timing-function: ease-in-out;
 			animation-fill-mode: both;
 		}
 
