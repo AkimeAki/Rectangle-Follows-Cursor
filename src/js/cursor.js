@@ -108,6 +108,8 @@
 	let mouseleave = true;
 	let pointerTimerId = null;
 	let fullscreen = false;
+	let oldClientX = clientX;
+	let oldClientY = clientY;
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
@@ -137,6 +139,9 @@
 	};
 
 	const pointer = () => {
+		oldClientX = clientX;
+		oldClientY = clientY;
+
 		if (mouseleave) {
 			cursor.style.opacity = 0;
 		}
@@ -201,6 +206,7 @@
 			clientX = event.clientX;
 			clientY = event.clientY;
 			target = event.target;
+
 			if (!fullscreen) {
 				mouseleave = false;
 			}
@@ -222,11 +228,25 @@
 
 	document.addEventListener("fullscreenchange", () => {
 		if (document.fullscreenElement) {
-			fullscreen = true;
 			mouseleave = true;
+			fullscreen = true;
 		} else {
-			fullscreen = false;
 			mouseleave = false;
+			fullscreen = false;
+		}
+	});
+
+	setInterval(() => {
+		if (oldClientX !== clientX || oldClientY !== clientY) {
+			chrome.runtime.sendMessage("a", () => {});
+		}
+	}, 100);
+
+	chrome.runtime.onMessage.addListener((request) => {
+		if (location.href === request) {
+			mouseleave = false;
+		} else {
+			mouseleave = true;
 		}
 	});
 
