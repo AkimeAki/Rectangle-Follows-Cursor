@@ -99,15 +99,15 @@
 
 	document.body.appendChild(style);
 
-	let transform = "";
-	let toAnimationName = "";
-	let status = "normal";
+	let transform = ""; // 遷移時の形状記憶用変数
+	let toAnimationName = ""; //遷移時のアニメーション用変数
+	let status = "normal"; // 四角いのの状態記憶用変数
 	let clientX = 0;
 	let clientY = 0;
 	let target = null;
-	let mouseleave = true;
-	let pointerTimerId = null;
-	let fullscreen = false;
+	let mouseleave = true; // 四角いのを描画するかどうか
+	let pointerTimerId = null; // 遷移時に変化するまでの余裕をもたせるためのタイマーID
+	let fullscreen = false; // フルスクリーンかどうか
 	let oldClientX = clientX;
 	let oldClientY = clientY;
 
@@ -138,9 +138,13 @@
 		toAnimationName = toName;
 	};
 
-	let count = 0;
+	let count = 0; // ループを間引く用のカウント
+	// ループ
 	const pointer = () => {
+		// 間引く
 		if (count > 10) {
+			// 移動を検知した際にbackground.jsに合図を送る
+			// iframe内で動作した際に他のページでの動作を停止するため、現在動いてるページ検知用の合図
 			if (oldClientX !== clientX || oldClientY !== clientY) {
 				chrome.runtime.sendMessage("a", () => {});
 			}
@@ -148,9 +152,11 @@
 			count = 0;
 		}
 
+		// 過去の座標を保存
 		oldClientX = clientX;
 		oldClientY = clientY;
 
+		// 図形の描画をさせない場合
 		if (mouseleave) {
 			cursor.style.opacity = 0;
 		}
@@ -198,10 +204,12 @@
 			}
 
 			if (status === "pointer") {
+				// ポインターモードの時はカーソルに近づける
 				x = clientX - pointerSize / 2;
 				y = clientY - pointerSize / 2;
 			}
 
+			// 追従
 			cursor.style.top = `${y}px`;
 			cursor.style.left = `${x}px`;
 		}
@@ -210,6 +218,7 @@
 		requestAnimationFrame(pointer);
 	};
 
+	// マウスカーソルを動かした時
 	document.addEventListener(
 		"mousemove",
 		(event) => {
@@ -217,10 +226,12 @@
 			clientY = event.clientY;
 			target = event.target;
 
+			// フルスクリーン時じゃない時に描画をさせる
 			if (!fullscreen) {
 				mouseleave = false;
 			}
 
+			// iframeの上に乗っかると描画をやめる
 			if (event.target.nodeName === "IFRAME" || event.target.localName === "iframe") {
 				mouseleave = true;
 			}
@@ -228,6 +239,7 @@
 		false
 	);
 
+	// マウスカーソルが画面外に行った時
 	document.body.addEventListener(
 		"mouseleave",
 		() => {
@@ -236,7 +248,10 @@
 		false
 	);
 
+	// フルスクリーンモードの切り替えが起こった時
 	document.addEventListener("fullscreenchange", () => {
+		// フルスクリーンモードになった場合に描画をやめる。
+		// 主にYouTubeなどの動画サービス用の処理だが、もっと良い処理を考えたい。
 		if (document.fullscreenElement) {
 			mouseleave = true;
 			fullscreen = true;
@@ -246,7 +261,9 @@
 		}
 	});
 
+	// backgroundからのメッセージを受信
 	chrome.runtime.onMessage.addListener((request) => {
+		// 移動してるページのみ描画する
 		if (location.href === request) {
 			mouseleave = false;
 		} else {
