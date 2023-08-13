@@ -138,7 +138,16 @@
 		toAnimationName = toName;
 	};
 
+	let count = 0;
 	const pointer = () => {
+		if (count > 10) {
+			if (oldClientX !== clientX || oldClientY !== clientY) {
+				chrome.runtime.sendMessage("a", () => {});
+			}
+
+			count = 0;
+		}
+
 		oldClientX = clientX;
 		oldClientY = clientY;
 
@@ -197,6 +206,7 @@
 			cursor.style.left = `${x}px`;
 		}
 
+		count++;
 		requestAnimationFrame(pointer);
 	};
 
@@ -235,12 +245,6 @@
 			fullscreen = false;
 		}
 	});
-
-	setInterval(() => {
-		if (oldClientX !== clientX || oldClientY !== clientY) {
-			chrome.runtime.sendMessage("a", () => {});
-		}
-	}, 100);
 
 	chrome.runtime.onMessage.addListener((request) => {
 		if (location.href === request) {
