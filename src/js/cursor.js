@@ -5,7 +5,6 @@
 	const hash = Date.now();
 	const className = `behind-cursor-${hash}`;
 	cursor.classList.add(className);
-	cursor.dataset.extension = "Aki";
 	document.body.appendChild(cursor);
 
 	const style = document.createElement("style");
@@ -13,7 +12,7 @@
 	const normalSize = 20;
 	const pointerSize = 50;
 	style.innerText = /* css */ `
-		.${className}[data-extension="Aki"] {
+		.${className} {
 			position: fixed;
 			display: block;
 			border-color: #fff9c4;
@@ -101,15 +100,7 @@
 
 	let transform = ""; // 遷移時の形状記憶用変数
 	let toAnimationName = ""; //遷移時のアニメーション用変数
-	let status = "normal"; // 四角いのの状態記憶用変数
-	let clientX = 0;
-	let clientY = 0;
-	let target = null;
-	let mouseleave = true; // 四角いのを描画するかどうか
-	let pointerTimerId = null; // 遷移時に変化するまでの余裕をもたせるためのタイマーID
-	let fullscreen = false; // フルスクリーンかどうか
-	let oldClientX = clientX;
-	let oldClientY = clientY;
+	let shapeStatus = "normal"; // 四角いのの状態記憶用変数
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
@@ -118,7 +109,7 @@
 		cursor.style.animationDirection = "";
 		cursor.style.animationDuration = "";
 		cursor.style.animationIterationCount = "";
-		if (status === "pointer") {
+		if (shapeStatus === "pointer") {
 			cursor.style.animationTimingFunction = "linear";
 			cursor.style.animationDirection = "normal";
 		} else {
@@ -132,87 +123,117 @@
 		cursor.style.animationDuration = "500ms";
 		cursor.style.animationIterationCount = 1;
 		cursor.style.transitionDuration = "500ms";
-		if (status === "normal") {
+		if (shapeStatus === "normal") {
 			cursor.style.transitionDuration = "200ms";
 		}
 		toAnimationName = toName;
 	};
 
+	let target = null;
+	let clientX = 0;
+	let clientY = 0;
+	let oldClientX = clientX;
+	let oldClientY = clientY;
 	let count = 0; // ループを間引く用のカウント
-	// ループ
+	let cursorAfkTimer = 0; // カーソルを放置時間を測るタイマーID
+	let toNormalShapeTimerId = 0; // ノーマル状態に変化するまでの余裕をもたせるためのタイマーID
+	let cursorAfk = true; // カーソルを放置しているかどうか
+	let cursorInWindow = true; // カーソルが画面内かどうか
+	let activeFrame = false; // 現在のフレームにカーソルがあるかどうか
 	const pointer = () => {
 		// 間引く
 		if (count > 10) {
 			// 移動を検知した際にbackground.jsに合図を送る
 			// iframe内で動作した際に他のページでの動作を停止するため、現在動いてるページ検知用の合図
 			if (oldClientX !== clientX || oldClientY !== clientY) {
-				chrome.runtime.sendMessage("a", () => {});
+				chrome.runtime.sendMessage(location.href, () => {});
 			}
 
 			count = 0;
+		}
+
+		// カーソルが放置されているかどうかを検知
+		if (oldClientX === clientX && oldClientY === clientY) {
+			if (!cursorAfk && cursorAfkTimer === 0) {
+				cursorAfkTimer = setTimeout(() => {
+					cursorAfk = true;
+				}, 5000);
+			}
+		} else {
+			cursorAfk = false;
+			clearTimeout(cursorAfkTimer);
+			cursorAfkTimer = 0;
 		}
 
 		// 過去の座標を保存
 		oldClientX = clientX;
 		oldClientY = clientY;
 
-		// 図形の描画をさせない場合
-		if (mouseleave) {
+		// 以下の条件の時のみ四角いのを描画する
+		//  現在のフレームがアクティブである
+		//  カーソルがウィンドウの中にいる
+		//  カーソルが一定時間放置されていない
+		if (activeFrame && cursorInWindow && !cursorAfk && target !== null) {
+			cursor.style.opacity = 1;
+		} else {
 			cursor.style.opacity = 0;
+
+			count++;
+			requestAnimationFrame(pointer);
+
+			return;
 		}
 
-		if (target === null) {
-			cursor.style.opacity = 0;
-		} else if (!mouseleave) {
-			cursor.style.opacity = 1;
-			let x = clientX + 27;
-			let y = clientY + 27;
+		// 四角いのの描画位置
+		let shapeX = clientX + 27;
+		let shapeY = clientY + 27;
 
-			const style = getComputedStyle(cursor);
-			if (getComputedStyle(target).cursor === "pointer") {
-				if (pointerTimerId !== null) {
-					clearTimeout(pointerTimerId);
-					pointerTimerId = null;
-				}
+		const currentShapeStyle = getComputedStyle(cursor);
+		if (getComputedStyle(target).cursor === "pointer") {
+			// カーソルがポインターなのでノーマル状態に遷移するまでのタイマーをリセット
+			clearTimeout(toNormalShapeTimerId);
+			toNormalShapeTimerId = 0;
 
-				if (status !== "pointer") {
+			// カーソルがポインターなのに四角いのがポインター状態じゃない時にポインター状態への遷移処理を開始
+			if (shapeStatus !== "pointer") {
+				// 遷移前の形状を記憶
+				transform = currentShapeStyle.getPropertyValue("transform");
+				cursor.style.setProperty("--currentTransform", transform);
+
+				// 遷移アニメーションを実行
+				cursor.style.animationName = `toPointer-${hash}`;
+				toAnimation(`pointer-${hash}`);
+			}
+
+			// 四角いのをポインター状態にする
+			shapeStatus = "pointer";
+		} else if (toNormalShapeTimerId === 0) {
+			toNormalShapeTimerId = setTimeout(() => {
+				// 四角いのの状態変化猶予時間終了後、四角いのがノーマル状態に戻す
+				if (shapeStatus !== "normal") {
 					// 遷移前の形状を記憶
-					transform = style.getPropertyValue("transform");
+					transform = currentShapeStyle.getPropertyValue("transform");
 					cursor.style.setProperty("--currentTransform", transform);
 
 					// 遷移アニメーションを実行
-					cursor.style.animationName = `toPointer-${hash}`;
-					toAnimation(`pointer-${hash}`);
+					cursor.style.animationName = `toMove-${hash}`;
+					toAnimation(`move-${hash}`);
 				}
 
-				status = "pointer";
-			} else {
-				if (pointerTimerId === null) {
-					pointerTimerId = setTimeout(() => {
-						if (status !== "normal") {
-							// 遷移前の形状を記憶
-							transform = style.getPropertyValue("transform");
-							cursor.style.setProperty("--currentTransform", transform);
-
-							// 遷移アニメーションを実行
-							cursor.style.animationName = `toMove-${hash}`;
-							toAnimation(`move-${hash}`);
-						}
-						status = "normal";
-					}, 350);
-				}
-			}
-
-			if (status === "pointer") {
-				// ポインターモードの時はカーソルに近づける
-				x = clientX - pointerSize / 2;
-				y = clientY - pointerSize / 2;
-			}
-
-			// 追従
-			cursor.style.top = `${y}px`;
-			cursor.style.left = `${x}px`;
+				// 四角いのをノーマル状態にする
+				shapeStatus = "normal";
+			}, 350);
 		}
+
+		if (shapeStatus === "pointer") {
+			// ポインターモードの時はカーソルに近づける
+			shapeX = clientX - pointerSize / 2;
+			shapeY = clientY - pointerSize / 2;
+		}
+
+		// 追従
+		cursor.style.top = `${shapeY}px`;
+		cursor.style.left = `${shapeX}px`;
 
 		count++;
 		requestAnimationFrame(pointer);
@@ -225,16 +246,6 @@
 			clientX = event.clientX;
 			clientY = event.clientY;
 			target = event.target;
-
-			// フルスクリーン時じゃない時に描画をさせる
-			if (!fullscreen) {
-				mouseleave = false;
-			}
-
-			// iframeの上に乗っかると描画をやめる
-			if (event.target.nodeName === "IFRAME" || event.target.localName === "iframe") {
-				mouseleave = true;
-			}
 		},
 		false
 	);
@@ -243,31 +254,27 @@
 	document.body.addEventListener(
 		"mouseleave",
 		() => {
-			mouseleave = true;
+			cursorInWindow = false;
 		},
 		false
 	);
 
-	// フルスクリーンモードの切り替えが起こった時
-	document.addEventListener("fullscreenchange", () => {
-		// フルスクリーンモードになった場合に描画をやめる。
-		// 主にYouTubeなどの動画サービス用の処理だが、もっと良い処理を考えたい。
-		if (document.fullscreenElement) {
-			mouseleave = true;
-			fullscreen = true;
-		} else {
-			mouseleave = false;
-			fullscreen = false;
-		}
-	});
+	// マウスカーソルが画面内に行った時
+	document.body.addEventListener(
+		"mouseenter",
+		() => {
+			cursorInWindow = true;
+		},
+		false
+	);
 
 	// backgroundからのメッセージを受信
 	chrome.runtime.onMessage.addListener((request) => {
 		// 移動してるページのみ描画する
 		if (location.href === request) {
-			mouseleave = false;
+			activeFrame = true;
 		} else {
-			mouseleave = true;
+			activeFrame = false;
 		}
 	});
 

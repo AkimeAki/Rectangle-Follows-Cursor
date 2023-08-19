@@ -1,9 +1,7 @@
 "use strict";
 
 chrome.runtime.onMessage.addListener((request, sender) => {
-	if (request === "a") {
-		chrome.tabs.sendMessage(sender.tab.id, sender.url).catch(() => {});
-	}
+	chrome.tabs.sendMessage(sender.tab.id, request).catch(() => {});
 
 	return true;
 });
