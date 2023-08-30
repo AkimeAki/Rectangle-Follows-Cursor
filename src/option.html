@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" href="./css/option.css" />
+		<title>オプション</title>
+	</head>
+	<body>
+		<main id="main">
+			<div>
+				<span>ポインター時の形状</span>
+			</div>
+			<div id="select-pointer-mode-area">
+				<label>
+					<input type="radio" name="pointer-mode" value="1" disabled />
+					対象を囲う（ver 1.x.x）
+				</label>
+				<label>
+					<input type="radio" name="pointer-mode" value="2" disabled />
+					正方形がぐるぐる（ver 2.x.x）
+				</label>
+				<label>
+					<input type="radio" name="pointer-mode" value="3" disabled />
+					変更なし
+				</label>
+			</div>
+			<div>
+				<span>色</span>
+			</div>
+			<div id="select-shape-color-area">
+				<label>
+					<input type="checkbox" name="default-shape-color" value="#fff9c4" checked disabled />
+					デフォルト
+				</label>
+				<label>カスタム<input id="shape-color" type="color" disabled /></label>
+			</div>
+		</main>
+		<button id="save-button" disabled>保存する</button>
+		<script src="./js/option.js"></script>
+	</body>
+</html>

@@ -6,7 +6,6 @@ ps:
 up:
 	docker compose build --no-cache
 	docker compose up -d
-	@make package-install
 
 .PHONY: コンテナ停止
 down:

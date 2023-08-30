@@ -1,0 +1,14 @@
+#main {
+	width: 100%;
+	max-width: 500px;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+}
+
+#select-pointer-mode-area > label {
+	display: block;
+}
+
+#select-shape-color-area > label {
+	display: block;
+}

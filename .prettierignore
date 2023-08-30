@@ -6,3 +6,4 @@ package-lock.json
 /**/.editorconfig
 /**/.gitignore
 /**/.prettierignore
+/src/icons/

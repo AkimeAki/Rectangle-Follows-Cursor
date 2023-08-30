@@ -1,35 +1,73 @@
 "use strict";
 
-(() => {
+const getPointerElement = (element, checkHref = false, savedLinkElement = undefined) => {
+	if (getComputedStyle(element.parentElement).getPropertyValue("cursor") === "pointer") {
+		// aタグのhrefが違う場合、内側のhrefを採用するかどうか
+		if (checkHref) {
+			// 対象の要素にhrefがある時
+			if (element.href !== undefined) {
+				// 対象の要素にあるhrefと記録されている最後のhrefが違う時は記録されている最後のhrefを返す
+				if (savedLinkElement?.href !== undefined && element.href !== savedLinkElement.href) {
+					return savedLinkElement;
+				}
+
+				// 対象の要素にあるhrefと記録されている最後のhrefが一致、もしくは要素が記録されていない場合は対象の要素を記録して実行
+				return getPointerElement(element.parentElement, checkHref, element);
+			}
+
+			// 対象の要素にhrefがない時は記録されている要素をそのまま残し実行
+			return getPointerElement(element.parentElement, checkHref, savedLinkElement);
+		} else {
+			return getPointerElement(element.parentElement);
+		}
+	}
+
+	// aタグのhrefが違う時は内側のhrefを採用する場合
+	if (checkHref) {
+		// 記録している要素のhrefが存在する場合だけ処理
+		if (savedLinkElement?.href !== undefined) {
+			// 対象の要素にhrefがない場合、もしくは対象の要素と記録している要素のhrefが一致していない場合は記録している要素を返す
+			if (element.href === undefined) {
+				return savedLinkElement;
+			} else if (element.href !== savedLinkElement.href) {
+				return savedLinkElement;
+			}
+		}
+	}
+
+	return element;
+};
+
+let shapeColor = "#fff9c4";
+
+const start = () => {
 	const cursor = document.createElement("span");
 	const hash = Date.now();
 	const className = `behind-cursor-${hash}`;
 	cursor.classList.add(className);
 	document.body.appendChild(cursor);
 
-	const style = document.createElement("style");
-	const skew = "skew(20deg, 20deg)";
-	const normalSize = 20;
-	const pointerSize = 50;
-	style.innerText = /* css */ `
+	const defaultStyle = document.createElement("style");
+	defaultStyle.innerHTML = /* css */ `
 		.${className} {
 			position: fixed;
 			display: block;
-			border-color: #fff9c4;
+			border-color: ${shapeColor};
 			border-style: solid;
 			border-width: 3px;
-			box-shadow: 0px 0px 15px -3px #fff9c4;
-			width: ${normalSize}px;
-			height: ${normalSize}px;
+			box-shadow: 0px 0px 15px -3px ${shapeColor};
+			width: 20px;
+			height: 20px;
 			z-index: 2147483647;
 			user-select: none;
 			pointer-events: none;
-			transform: rotate(45deg) ${skew};
-			transition-property: top, left, width, height, transform, opacity;
+			rotate: 45deg;
+			transform: skew(20deg, 20deg);
+			transition-property: all;
 			transition-timing-function: ease-out;
 			transition-duration: 400ms;
 			box-sizing: border-box;
-			animation-name: move-${hash};
+			animation-name: normal-animation-${hash};
 			animation-duration: 10s;
 			animation-iteration-count: infinite;
 			animation-direction: alternate;
@@ -37,99 +75,41 @@
 			animation-fill-mode: both;
 		}
 
-		@keyframes move-${hash} {
+		@keyframes normal-animation-${hash} {
 			0% {
-				transform: rotate(45deg) ${skew};
+				rotate: 45deg
 			}
 
 			25% {
-				transform: rotate(45deg) ${skew};
+				rotate: 45deg
 			}
 
 			75% {
-				transform: rotate(765deg) ${skew};
+				rotate: 765deg;
 			}
 
 			100% {
-				transform: rotate(765deg) ${skew};
-			}
-		}
-
-		@keyframes pointer-${hash} {
-			0% {
-				transform: rotate(0deg) skew(0);
-				width: ${pointerSize}px;
-				height: ${pointerSize}px;
-			}
-
-			100% {
-				transform: rotate(360deg) skew(0);
-				width: ${pointerSize}px;
-				height: ${pointerSize}px;
-			}
-		}
-
-		@keyframes toPointer-${hash} {
-			from {
-				transform: var(--currentTransform);
-			}
-
-			to {
-				transform: rotate(-360deg) skew(0);
-				width: ${pointerSize}px;
-				height: ${pointerSize}px;
-			}
-		}
-
-		@keyframes toMove-${hash} {
-			from {
-				transform: var(--currentTransform);
-				width: ${pointerSize}px;
-				height: ${pointerSize}px;
-			}
-
-			to {
-				transform: rotate(45deg) ${skew};
-				width: ${normalSize}px;
-				height: ${normalSize}px;
+				rotate: 765deg
 			}
 		}
 	`;
 
-	document.body.appendChild(style);
+	document.body.appendChild(defaultStyle);
 
-	let transform = ""; // 遷移時の形状記憶用変数
-	let toAnimationName = ""; //遷移時のアニメーション用変数
+	const changeStyle = document.createElement("style");
+	document.body.appendChild(changeStyle);
+
+	// let transform = ""; // 遷移時の形状記憶用変数
+	// let toAnimationName = ""; //遷移時のアニメーション用変数
 	let shapeStatus = "normal"; // 四角いのの状態記憶用変数
 
 	// 遷移アニメーション終了時の処理
 	cursor.addEventListener("animationend", () => {
-		cursor.style.animationName = toAnimationName;
-		cursor.style.animationTimingFunction = "";
-		cursor.style.animationDirection = "";
-		cursor.style.animationDuration = "";
-		cursor.style.animationIterationCount = "";
-		if (shapeStatus === "pointer") {
-			cursor.style.animationTimingFunction = "linear";
-			cursor.style.animationDirection = "normal";
-		} else {
-			cursor.style.transitionDuration = "";
-		}
+		isToAnimationEnd = true;
 	});
 
-	const toAnimation = (toName) => {
-		cursor.style.animationTimingFunction = "ease-out";
-		cursor.style.animationDirection = "normal";
-		cursor.style.animationDuration = "500ms";
-		cursor.style.animationIterationCount = 1;
-		cursor.style.transitionDuration = "500ms";
-		if (shapeStatus === "normal") {
-			cursor.style.transitionDuration = "200ms";
-		}
-		toAnimationName = toName;
-	};
-
 	let target = null;
+	let pointerTarget = null; // ポインター時のターゲット
 	let clientX = 0;
 	let clientY = 0;
 	let oldClientX = clientX;
@@ -140,6 +120,9 @@
 	let cursorAfk = true; // カーソルを放置しているかどうか
 	let cursorInWindow = true; // カーソルが画面内かどうか
 	let activeFrame = false; // 現在のフレームにカーソルがあるかどうか
+	let pointerMode = "2"; // ポインター状態のモード
+	let isToAnimationEnd = true;
+	let beforeTransitionShapeRotate = null; // 遷移前の角度
 	const pointer = () => {
 		// 間引く
 		if (count > 10) {
@@ -185,55 +168,250 @@
 		}
 
 		// 四角いのの描画位置
-		let shapeX = clientX + 27;
-		let shapeY = clientY + 27;
+		let shapeX = 0;
+		let shapeY = 0;
+		const currentRotate = Number(getComputedStyle(cursor).getPropertyValue("rotate").replace("deg", ""));
 
-		const currentShapeStyle = getComputedStyle(cursor);
-		if (getComputedStyle(target).cursor === "pointer") {
-			// カーソルがポインターなのでノーマル状態に遷移するまでのタイマーをリセット
-			clearTimeout(toNormalShapeTimerId);
-			toNormalShapeTimerId = 0;
+		let overrideShapeStatus = null; // 強制的にステータスを変更した場合のステータス
+		if (shapeStatus === "pointer" && pointerMode === "1") {
+			pointerTarget = getPointerElement(pointerTarget, true);
 
-			// カーソルがポインターなのに四角いのがポインター状態じゃない時にポインター状態への遷移処理を開始
-			if (shapeStatus !== "pointer") {
-				// 遷移前の形状を記憶
-				transform = currentShapeStyle.getPropertyValue("transform");
-				cursor.style.setProperty("--currentTransform", transform);
-
-				// 遷移アニメーションを実行
-				cursor.style.animationName = `toPointer-${hash}`;
-				toAnimation(`pointer-${hash}`);
-			}
-
-			// 四角いのをポインター状態にする
-			shapeStatus = "pointer";
-		} else if (toNormalShapeTimerId === 0) {
-			toNormalShapeTimerId = setTimeout(() => {
-				// 四角いのの状態変化猶予時間終了後、四角いのがノーマル状態に戻す
-				if (shapeStatus !== "normal") {
-					// 遷移前の形状を記憶
-					transform = currentShapeStyle.getPropertyValue("transform");
-					cursor.style.setProperty("--currentTransform", transform);
-
-					// 遷移アニメーションを実行
-					cursor.style.animationName = `toMove-${hash}`;
-					toAnimation(`move-${hash}`);
-				}
-
-				// 四角いのをノーマル状態にする
+			const rect = pointerTarget.getBoundingClientRect();
+			if (rect.right - rect.left <= 1 || rect.bottom - rect.top <= 1) {
 				shapeStatus = "normal";
-			}, 350);
+				overrideShapeStatus = "normal";
+			}
+		}
+
+		if (pointerMode === "3") {
+			shapeStatus = "normal";
+			overrideShapeStatus = "normal";
 		}
 
 		if (shapeStatus === "pointer") {
-			// ポインターモードの時はカーソルに近づける
-			shapeX = clientX - pointerSize / 2;
-			shapeY = clientY - pointerSize / 2;
+			if (pointerMode === "1") {
+				const margin = 5;
+				const pointerTargetRect = pointerTarget.getBoundingClientRect();
+				let targetLeft = pointerTargetRect.left;
+				let targetTop = pointerTargetRect.top;
+				let targetBottom = pointerTargetRect.bottom;
+				let targetRight = pointerTargetRect.right;
+
+				const checkChildren = (parent) => {
+					if (Array.from(parent.children).length === 0) {
+						return;
+					}
+
+					if (getComputedStyle(parent).getPropertyValue("overflow") === "hidden") {
+						return;
+					}
+
+					Array.from(parent.children).forEach((element) => {
+						if (Array.from(element.children).length !== 0) {
+							checkChildren(element);
+						}
+
+						if (getComputedStyle(element).getPropertyValue("display") === "none") {
+							return;
+						}
+
+						const childRect = element.getBoundingClientRect();
+						const childWidth = childRect.right - childRect.left;
+						const childHeight = childRect.bottom - childRect.top;
+
+						if (targetBottom < childRect.bottom && childWidth !== 0 && childHeight !== 0) {
+							targetBottom = childRect.bottom;
+						}
+
+						if (targetRight < childRect.right && childWidth !== 0 && childHeight !== 0) {
+							targetRight = childRect.right;
+						}
+
+						if (targetTop > childRect.top && childWidth !== 0 && childHeight !== 0) {
+							targetTop = childRect.top;
+						}
+
+						if (targetLeft > childRect.left && childWidth !== 0 && childHeight !== 0) {
+							targetLeft = childRect.left;
+						}
+					});
+				};
+
+				checkChildren(pointerTarget);
+
+				const width = targetRight - targetLeft + margin * 2;
+				const height = targetBottom - targetTop + margin * 2;
+
+				if (!isToAnimationEnd) {
+					// 遷移アニメーション
+					changeStyle.innerHTML = /* css */ `
+						.${className} {
+							width: ${width}px;
+							height: ${height}px;
+							transition-duration: 200ms;
+							animation-name: to-pointer-${hash};
+							animation-duration: 200ms;
+							animation-iteration-count: 1;
+							animation-timing-function: linear;
+						}
+
+						@keyframes to-pointer-${hash} {
+							from {
+								transform: ${getComputedStyle(cursor).getPropertyValue("transform")};
+								rotate: ${currentRotate}deg;
+							}
+
+							to {
+								rotate: ${Math.round(currentRotate / 180) * 180}deg;
+								transform: skew(0);
+							}
+						}
+					`;
+				} else {
+					// 遷移アニメーション終了後
+					changeStyle.innerHTML = /* css */ `
+						.${className} {
+							width: ${width}px;
+							height: ${height}px;
+							rotate: 0deg;
+							transform: skew(0);
+							transition-duration: 200ms;
+							animation-name: none;
+						}
+					`;
+				}
+
+				shapeX = targetLeft - margin;
+				shapeY = targetTop - margin;
+			} else if (pointerMode === "2") {
+				if (!isToAnimationEnd) {
+					changeStyle.innerHTML = /* css */ `
+						.${className} {
+							width: 50px;
+							height: 50px;
+							transition-duration: 200ms;
+							animation-name: to-pointer-${hash};
+							animation-duration: 200ms;
+							animation-iteration-count: 1;
+							animation-timing-function: linear;
+						}
+
+						@keyframes to-pointer-${hash} {
+							from {
+								transform: ${getComputedStyle(cursor).getPropertyValue("transform")};
+								rotate: ${currentRotate}deg;
+							}
+
+							to {
+								rotate: ${Math.round(currentRotate / 180) * 180}deg;
+								transform: skew(0);
+							}
+						}
+					`;
+				} else {
+					// 遷移アニメーション終了後
+					changeStyle.innerHTML = /* css */ `
+						.${className} {
+							transform: skew(0);
+							width: 50px;
+							height: 50px;
+							transition-duration: 200ms;
+							animation-name: pointer-${hash};
+							animation-duration: 800ms;
+							animation-iteration-count: infinite;
+							animation-timing-function: linear;
+							animation-direction: normal
+						}
+
+						@keyframes pointer-${hash} {
+							from {
+								rotate: 0deg;
+							}
+
+							to {
+								rotate: 90deg;
+							}
+						}
+					`;
+				}
+
+				// ポインターモードの時はカーソルに近づける
+				shapeX = clientX - cursor.clientWidth / 2;
+				shapeY = clientY - cursor.clientHeight / 2;
+			}
+		} else if (shapeStatus === "normal") {
+			if (!isToAnimationEnd) {
+				if (beforeTransitionShapeRotate === null) {
+					beforeTransitionShapeRotate = currentRotate;
+				}
+
+				// 遷移アニメーション
+				changeStyle.innerHTML = /* css */ `
+					.${className} {
+						transition-duration: 400ms;
+						transition-timing-function: ease-out;
+						animation-name: to-normal-${hash};
+						animation-duration: 1s;
+						animation-iteration-count: 1;
+						animation-timing-function: ease-out;
+					}
+
+					@keyframes to-normal-${hash} {
+						from {
+							transform: ${getComputedStyle(cursor).getPropertyValue("transform")};
+							rotate: ${beforeTransitionShapeRotate}deg;
+						}
+
+						to {
+							rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180 + 45 + 180}deg;;
+							transform: skew(20deg, 20deg);
+						}
+					}
+				`;
+			} else {
+				// 遷移アニメーション終了後
+
+				beforeTransitionShapeRotate = null;
+				if (changeStyle.innerHTML !== "") {
+					changeStyle.innerHTML = "";
+				}
+			}
+
+			shapeX = clientX + 27;
+			shapeY = clientY + 27;
 		}
 
 		// 追従
 		cursor.style.top = `${shapeY}px`;
 		cursor.style.left = `${shapeX}px`;
+
+		if (
+			getComputedStyle(target).cursor === "pointer" &&
+			(overrideShapeStatus === null || overrideShapeStatus === "pointer")
+		) {
+			// カーソルがポインターなのでノーマル状態に遷移するまでのタイマーをリセット
+			clearTimeout(toNormalShapeTimerId);
+			toNormalShapeTimerId = 0;
+			pointerTarget = target;
+
+			if (shapeStatus !== "pointer" && overrideShapeStatus === null) {
+				isToAnimationEnd = false;
+			}
+
+			// 四角いのをポインター状態にする
+			shapeStatus = "pointer";
+		} else {
+			if (toNormalShapeTimerId === 0) {
+				toNormalShapeTimerId = setTimeout(() => {
+					if (shapeStatus !== "normal") {
+						isToAnimationEnd = false;
+					}
+
+					// 四角いのをノーマル状態にする
+					shapeStatus = "normal";
+				}, 350);
+			}
+		}
 
 		count++;
 		requestAnimationFrame(pointer);
@@ -278,5 +456,21 @@
 		}
 	});
 
+	chrome.storage.sync.get(["pointerMode"], (value) => {
+		if (value.pointerMode !== undefined) {
+			pointerMode = value.pointerMode;
+		}
+	});
+
 	pointer();
+};
+
+(() => {
+	chrome.storage.sync.get(["shapeColor"], (value) => {
+		if (value.shapeColor !== undefined) {
+			shapeColor = value.shapeColor;
+		}
+
+		start();
+	});
 })();

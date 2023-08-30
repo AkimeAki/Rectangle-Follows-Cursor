@@ -1,11 +1,12 @@
 {
 	"manifest_version": 3,
 	"name": "カーソルを追従する四角いの",
-	"version": "2.7.0",
+	"version": "3.0.0",
 	"description": "後ろから四角いのが付いてきます。\nクリックできる部分に重なるとちょっとアピールします。",
 	"icons": {
 		"128": "icons/icon128.png"
 	},
+	"options_page": "option.html",
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
@@ -16,5 +17,5 @@
 	"background": {
 		"service_worker": "./js/background.js"
 	},
-	"permissions": ["tabs", "background"]
+	"permissions": ["tabs", "storage"]
 }
