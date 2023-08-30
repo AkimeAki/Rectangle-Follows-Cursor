@@ -1,7 +1,10 @@
 "use strict";
 
 const getPointerElement = (element, checkHref = false, savedLinkElement = undefined) => {
-	if (getComputedStyle(element.parentElement).getPropertyValue("cursor") === "pointer") {
+	if (
+		element.parentElement !== null &&
+		getComputedStyle(element.parentElement).getPropertyValue("cursor") === "pointer"
+	) {
 		// aタグのhrefが違う場合、内側のhrefを採用するかどうか
 		if (checkHref) {
 			// 対象の要素にhrefがある時
