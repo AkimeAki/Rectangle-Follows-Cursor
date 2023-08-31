@@ -190,7 +190,7 @@ const start = () => {
 		const currentRotate = Number(getComputedStyle(cursor).getPropertyValue("rotate").replace("deg", ""));
 
 		let overrideShapeStatus = null; // 強制的にステータスを変更した場合のステータス
-		if (shapeStatus === "pointer" && pointerMode === "1") {
+		if (shapeStatus === "pointer" && (pointerMode === "1" || pointerMode === "4")) {
 			pointerTarget = getPointerElement(pointerTarget, true);
 
 			const rect = pointerTarget.getBoundingClientRect();
@@ -404,6 +404,128 @@ const start = () => {
 				// ポインターモードの時はカーソルに近づける
 				shapeX = clientX - cursor.clientWidth / 2;
 				shapeY = clientY - cursor.clientHeight / 2;
+			} else if (pointerMode === "4") {
+				const margin = 5;
+				const pointerTargetRect = pointerTarget.getBoundingClientRect();
+				let targetLeft = pointerTargetRect.left;
+				let targetTop = pointerTargetRect.top;
+				let targetBottom = pointerTargetRect.bottom;
+				let targetRight = pointerTargetRect.right;
+
+				const checkChildren = (parent) => {
+					if (Array.from(parent.children).length === 0) {
+						return;
+					}
+
+					if (getComputedStyle(parent).getPropertyValue("overflow") === "hidden") {
+						return;
+					}
+
+					Array.from(parent.children).forEach((element) => {
+						if (Array.from(element.children).length !== 0) {
+							checkChildren(element);
+						}
+
+						if (getComputedStyle(element).getPropertyValue("display") === "none") {
+							return;
+						}
+
+						const childRect = element.getBoundingClientRect();
+						const childWidth = childRect.right - childRect.left;
+						const childHeight = childRect.bottom - childRect.top;
+
+						if (targetBottom < childRect.bottom && childWidth !== 0 && childHeight !== 0) {
+							targetBottom = childRect.bottom;
+						}
+
+						if (targetRight < childRect.right && childWidth !== 0 && childHeight !== 0) {
+							targetRight = childRect.right;
+						}
+
+						if (targetTop > childRect.top && childWidth !== 0 && childHeight !== 0) {
+							targetTop = childRect.top;
+						}
+
+						if (targetLeft > childRect.left && childWidth !== 0 && childHeight !== 0) {
+							targetLeft = childRect.left;
+						}
+					});
+				};
+
+				checkChildren(pointerTarget);
+
+				const width = targetRight - targetLeft + margin * 2;
+				const height = targetBottom - targetTop + margin * 2;
+
+				if (!isToAnimationEnd) {
+					// 遷移アニメーション
+
+					if (beforeTransitionShapeRotate === null) {
+						beforeTransitionShapeRotate = currentRotate;
+					}
+
+					if (beforeTransitionShapeTransform === null) {
+						beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+					}
+
+					const style = /* css */ `
+						.${className} {
+							width: ${width}px;
+							height: ${height}px;
+							translate: -50% -50%;
+							transition: width 400ms, height 400ms, top 200ms, left 200ms;
+							animation-name: to-pointer-${hash};
+							animation-duration: 400ms;
+							animation-iteration-count: 1;
+							animation-timing-function: linear;
+						}
+
+						@keyframes to-pointer-${hash} {
+							0% {
+								transform: ${beforeTransitionShapeTransform};
+								rotate: ${beforeTransitionShapeRotate}deg;
+							}
+
+							10% {
+								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
+								transform: skew(0);
+							}
+
+							100% {
+								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
+								transform: skew(0);
+							}
+						}
+					`;
+
+					if (changeStyle.innerHTML !== style) {
+						changeStyle.innerHTML = style;
+					}
+				} else {
+					// 遷移アニメーション終了後
+
+					beforeTransitionShapeRotate = null;
+					beforeTransitionShapeTransform = null;
+
+					const style = /* css */ `
+						.${className} {
+							width: ${width}px;
+							height: ${height}px;
+							translate: -50% -50%;
+							rotate: 0deg;
+							transform: skew(0);
+							transition-duration: 200ms;
+							animation-name: none;
+						}
+					`;
+
+					if (changeStyle.innerHTML !== style) {
+						changeStyle.innerHTML = style;
+					}
+				}
+
+				shapeX = targetLeft + (targetRight - targetLeft) / 2;
+				shapeY = targetTop + (targetBottom - targetTop) / 2;
 			}
 		} else if (shapeStatus === "normal") {
 			if (!isToAnimationEnd) {
@@ -416,28 +538,61 @@ const start = () => {
 				}
 
 				// 遷移アニメーション
-				const style = /* css */ `
-					.${className} {
-						transition-duration: 400ms;
-						transition-timing-function: ease-out;
-						animation-name: to-normal-${hash};
-						animation-duration: 500ms;
-						animation-iteration-count: 1;
-						animation-timing-function: ease-out;
-					}
 
-					@keyframes to-normal-${hash} {
-						from {
-							transform: ${beforeTransitionShapeTransform};
-							rotate: ${beforeTransitionShapeRotate}deg;
+				let style = "";
+				if (pointerMode === "4") {
+					style = /* css */ `
+						.${className} {
+							translate: -50% -50%;
+							transition-timing-function: ease-out;
+							transition: width 200ms, height 200ms, top 400ms, left 400ms;
+							animation-name: to-normal-${hash};
+							animation-duration: 400ms;
+							animation-iteration-count: 1;
+							animation-timing-function: ease-out;
 						}
 
-						to {
-							rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180 + 45 + 180}deg;;
-							transform: skew(20deg, 20deg);
+						@keyframes to-normal-${hash} {
+							0% {
+								transform: ${beforeTransitionShapeTransform};
+								rotate: ${beforeTransitionShapeRotate}deg;
+							}
+
+							50% {
+								transform: ${beforeTransitionShapeTransform};
+								rotate: ${beforeTransitionShapeRotate}deg;
+							}
+
+							100% {
+								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180 + 45 + 180}deg;;
+								transform: skew(20deg, 20deg);
+							}
 						}
-					}
-				`;
+					`;
+				} else {
+					style = /* css */ `
+						.${className} {
+							transition-duration: 400ms;
+							transition-timing-function: ease-out;
+							animation-name: to-normal-${hash};
+							animation-duration: 500ms;
+							animation-iteration-count: 1;
+							animation-timing-function: ease-out;
+						}
+
+						@keyframes to-normal-${hash} {
+							from {
+								transform: ${beforeTransitionShapeTransform};
+								rotate: ${beforeTransitionShapeRotate}deg;
+							}
+
+							to {
+								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180 + 45 + 180}deg;;
+								transform: skew(20deg, 20deg);
+							}
+						}
+					`;
+				}
 
 				if (changeStyle.innerHTML !== style) {
 					changeStyle.innerHTML = style;
