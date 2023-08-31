@@ -126,6 +126,7 @@ const start = () => {
 	let pointerMode = "2"; // ポインター状態のモード
 	let isToAnimationEnd = true;
 	let beforeTransitionShapeRotate = null; // 遷移前の角度
+	let beforeTransitionShapeTransform = null; // 遷移前の変形
 	const pointer = () => {
 		// 間引く
 		if (count > 10) {
@@ -247,7 +248,16 @@ const start = () => {
 
 				if (!isToAnimationEnd) {
 					// 遷移アニメーション
-					changeStyle.innerHTML = /* css */ `
+
+					if (beforeTransitionShapeRotate === null) {
+						beforeTransitionShapeRotate = currentRotate;
+					}
+
+					if (beforeTransitionShapeTransform === null) {
+						beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+					}
+
+					const style = /* css */ `
 						.${className} {
 							width: ${width}px;
 							height: ${height}px;
@@ -260,19 +270,27 @@ const start = () => {
 
 						@keyframes to-pointer-${hash} {
 							from {
-								transform: ${getComputedStyle(cursor).getPropertyValue("transform")};
-								rotate: ${currentRotate}deg;
+								transform: ${beforeTransitionShapeTransform};
+								rotate: ${beforeTransitionShapeRotate}deg;
 							}
 
 							to {
-								rotate: ${Math.round(currentRotate / 180) * 180}deg;
+								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
 								transform: skew(0);
 							}
 						}
 					`;
+
+					if (changeStyle.innerHTML !== style) {
+						changeStyle.innerHTML = style;
+					}
 				} else {
 					// 遷移アニメーション終了後
-					changeStyle.innerHTML = /* css */ `
+
+					beforeTransitionShapeRotate = null;
+					beforeTransitionShapeTransform = null;
+
+					const style = /* css */ `
 						.${className} {
 							width: ${width}px;
 							height: ${height}px;
@@ -282,13 +300,27 @@ const start = () => {
 							animation-name: none;
 						}
 					`;
+
+					if (changeStyle.innerHTML !== style) {
+						changeStyle.innerHTML = style;
+					}
 				}
 
 				shapeX = targetLeft - margin;
 				shapeY = targetTop - margin;
 			} else if (pointerMode === "2") {
 				if (!isToAnimationEnd) {
-					changeStyle.innerHTML = /* css */ `
+					// 遷移アニメーション
+
+					if (beforeTransitionShapeRotate === null) {
+						beforeTransitionShapeRotate = currentRotate;
+					}
+
+					if (beforeTransitionShapeTransform === null) {
+						beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+					}
+
+					const style = /* css */ `
 						.${className} {
 							width: 50px;
 							height: 50px;
@@ -301,19 +333,27 @@ const start = () => {
 
 						@keyframes to-pointer-${hash} {
 							from {
-								transform: ${getComputedStyle(cursor).getPropertyValue("transform")};
-								rotate: ${currentRotate}deg;
+								transform: ${beforeTransitionShapeTransform};
+								rotate: ${beforeTransitionShapeRotate}deg;
 							}
 
 							to {
-								rotate: ${Math.round(currentRotate / 180) * 180}deg;
+								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
 								transform: skew(0);
 							}
 						}
 					`;
+
+					if (changeStyle.innerHTML !== style) {
+						changeStyle.innerHTML = style;
+					}
 				} else {
 					// 遷移アニメーション終了後
-					changeStyle.innerHTML = /* css */ `
+
+					beforeTransitionShapeRotate = null;
+					beforeTransitionShapeTransform = null;
+
+					const style = /* css */ `
 						.${className} {
 							transform: skew(0);
 							width: 50px;
@@ -336,6 +376,9 @@ const start = () => {
 							}
 						}
 					`;
+					if (changeStyle.innerHTML !== style) {
+						changeStyle.innerHTML = style;
+					}
 				}
 
 				// ポインターモードの時はカーソルに近づける
@@ -348,20 +391,24 @@ const start = () => {
 					beforeTransitionShapeRotate = currentRotate;
 				}
 
+				if (beforeTransitionShapeTransform === null) {
+					beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+				}
+
 				// 遷移アニメーション
-				changeStyle.innerHTML = /* css */ `
+				const style = /* css */ `
 					.${className} {
 						transition-duration: 400ms;
 						transition-timing-function: ease-out;
 						animation-name: to-normal-${hash};
-						animation-duration: 1s;
+						animation-duration: 500ms;
 						animation-iteration-count: 1;
 						animation-timing-function: ease-out;
 					}
 
 					@keyframes to-normal-${hash} {
 						from {
-							transform: ${getComputedStyle(cursor).getPropertyValue("transform")};
+							transform: ${beforeTransitionShapeTransform};
 							rotate: ${beforeTransitionShapeRotate}deg;
 						}
 
@@ -371,10 +418,15 @@ const start = () => {
 						}
 					}
 				`;
+
+				if (changeStyle.innerHTML !== style) {
+					changeStyle.innerHTML = style;
+				}
 			} else {
 				// 遷移アニメーション終了後
 
 				beforeTransitionShapeRotate = null;
+				beforeTransitionShapeTransform = null;
 				if (changeStyle.innerHTML !== "") {
 					changeStyle.innerHTML = "";
 				}
