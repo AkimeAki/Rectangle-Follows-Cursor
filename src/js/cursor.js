@@ -190,6 +190,7 @@ const start = () => {
 		const currentRotate = Number(getComputedStyle(cursor).getPropertyValue("rotate").replace("deg", ""));
 
 		let overrideShapeStatus = null; // 強制的にステータスを変更した場合のステータス
+
 		if (shapeStatus === "pointer" && (pointerMode === "1" || pointerMode === "4")) {
 			pointerTarget = getPointerElement(pointerTarget, true);
 
@@ -615,10 +616,7 @@ const start = () => {
 		cursor.style.top = `${shapeY}px`;
 		cursor.style.left = `${shapeX}px`;
 
-		if (
-			getComputedStyle(target).cursor === "pointer" &&
-			(overrideShapeStatus === null || overrideShapeStatus === "pointer")
-		) {
+		if (getComputedStyle(target).cursor === "pointer") {
 			// カーソルがポインターなのでノーマル状態に遷移するまでのタイマーをリセット
 			clearTimeout(toNormalShapeTimerId);
 			toNormalShapeTimerId = 0;
