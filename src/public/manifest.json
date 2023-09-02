@@ -6,11 +6,11 @@
 	"icons": {
 		"128": "icons/icon128.png"
 	},
-	"options_page": "option.html",
+	"options_page": "./option.html",
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
-			"js": ["./js/cursor.js"],
+			"js": ["./content.js"],
 			"all_frames": true
 		}
 	],

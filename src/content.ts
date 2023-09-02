@@ -1,5 +1,6 @@
-import { getPointerElement } from "./lib";
+import { getPointerElement } from "@/lib";
 
+let shapeColor = "#fff9c4";
 const start = () => {
 	const cursor = document.createElement("span");
 	const hash = Date.now();
@@ -65,6 +66,7 @@ const start = () => {
 		isToAnimationEnd = true;
 	});
 
+	let shapeStatus: "normal" | "pointer" = "normal";
 	let target: HTMLElement | null = null;
 	let pointerTarget: HTMLElement | null = null; // ポインター時のターゲット
 	let clientX = 0;
@@ -73,14 +75,14 @@ const start = () => {
 	let oldClientY = clientY;
 	let loopCount = 0; // ループカウント
 	let sendBGMessageCount = 0; // backgroundにメッセージを送る際の間引く用カウント
-	let cursorAfkTimer = 0; // カーソルを放置時間を測るタイマーID
+	let cursorAfkTimerId = 0; // カーソルを放置時間を測るタイマーID
 	let scrollTimerId = 0; // スクロール中を判定するタイマーID
 	let isScroll = false;
 	let toNormalShapeTimerId = 0; // ノーマル状態に変化するまでの余裕をもたせるためのタイマーID
 	let cursorAfk = true; // カーソルを放置しているかどうか
 	let cursorInWindow = true; // カーソルが画面内かどうか
 	let activeFrame = false; // 現在のフレームにカーソルがあるかどうか
-	let pointerMode = "2"; // ポインター状態のモード
+	let pointerMode: "1" | "2" | "3" | "4" = "2"; // ポインター状態のモード
 	let beforeTransitionShapeRotate: number | null = null; // 遷移前の角度
 	let beforeTransitionShapeTransform: number | null = null; // 遷移前の変形
 	const pointer = () => {
@@ -108,15 +110,15 @@ const start = () => {
 
 		// カーソルが放置されているかどうかを検知
 		if (oldClientX === clientX && oldClientY === clientY) {
-			if (!cursorAfk && cursorAfkTimer === 0) {
-				cursorAfkTimer = setTimeout(() => {
+			if (!cursorAfk && cursorAfkTimerId === 0) {
+				cursorAfkTimerId = window.setTimeout(() => {
 					cursorAfk = true;
 				}, 5000);
 			}
 		} else {
 			cursorAfk = false;
-			clearTimeout(cursorAfkTimer);
-			cursorAfkTimer = 0;
+			clearTimeout(cursorAfkTimerId);
+			cursorAfkTimerId = 0;
 		}
 
 		// 過去の座標を保存
@@ -144,7 +146,7 @@ const start = () => {
 
 		let overrideShapeStatus = null; // 強制的にステータスを変更した場合のステータス
 
-		if (shapeStatus === "pointer" && (pointerMode === "1" || pointerMode === "4")) {
+		if (shapeStatus === "pointer" && (pointerMode === "1" || pointerMode === "4") && pointerTarget !== null) {
 			pointerTarget = getPointerElement(pointerTarget, true);
 
 			const rect = pointerTarget.getBoundingClientRect();
@@ -170,7 +172,7 @@ const start = () => {
 			}
 		}
 
-		if (shapeStatus === "pointer") {
+		if (shapeStatus === "pointer" && pointerTarget !== null) {
 			if (pointerMode === "1") {
 				const margin = 5;
 				const pointerTargetRect = pointerTarget.getBoundingClientRect();
@@ -179,7 +181,7 @@ const start = () => {
 				let targetBottom = pointerTargetRect.bottom;
 				let targetRight = pointerTargetRect.right;
 
-				const checkChildren = (parent) => {
+				const checkChildren = (parent: HTMLElement) => {
 					if (Array.from(parent.children).length === 0) {
 						return;
 					}
@@ -190,7 +192,7 @@ const start = () => {
 
 					Array.from(parent.children).forEach((element) => {
 						if (Array.from(element.children).length !== 0) {
-							checkChildren(element);
+							checkChildren(element as HTMLElement);
 						}
 
 						if (getComputedStyle(element).getPropertyValue("display") === "none") {
@@ -232,7 +234,7 @@ const start = () => {
 					}
 
 					if (beforeTransitionShapeTransform === null) {
-						beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+						beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
 					}
 
 					const style = /* css */ `
@@ -295,7 +297,7 @@ const start = () => {
 					}
 
 					if (beforeTransitionShapeTransform === null) {
-						beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+						beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
 					}
 
 					const style = /* css */ `
@@ -370,7 +372,7 @@ const start = () => {
 				let targetBottom = pointerTargetRect.bottom;
 				let targetRight = pointerTargetRect.right;
 
-				const checkChildren = (parent) => {
+				const checkChildren = (parent: HTMLElement) => {
 					if (Array.from(parent.children).length === 0) {
 						return;
 					}
@@ -381,7 +383,7 @@ const start = () => {
 
 					Array.from(parent.children).forEach((element) => {
 						if (Array.from(element.children).length !== 0) {
-							checkChildren(element);
+							checkChildren(element as HTMLElement);
 						}
 
 						if (getComputedStyle(element).getPropertyValue("display") === "none") {
@@ -423,7 +425,7 @@ const start = () => {
 					}
 
 					if (beforeTransitionShapeTransform === null) {
-						beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+						beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
 					}
 
 					const style = /* css */ `
@@ -492,7 +494,7 @@ const start = () => {
 				}
 
 				if (beforeTransitionShapeTransform === null) {
-					beforeTransitionShapeTransform = getComputedStyle(cursor).getPropertyValue("transform");
+					beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
 				}
 
 				// 遷移アニメーション
@@ -587,7 +589,7 @@ const start = () => {
 			shapeStatus = "pointer";
 		} else {
 			if (toNormalShapeTimerId === 0) {
-				toNormalShapeTimerId = setTimeout(() => {
+				toNormalShapeTimerId = window.setTimeout(() => {
 					if (shapeStatus !== "normal") {
 						isToAnimationEnd = false;
 					}
@@ -607,7 +609,7 @@ const start = () => {
 		(event) => {
 			clientX = event.clientX;
 			clientY = event.clientY;
-			target = event.target;
+			target = event.target as HTMLElement;
 		},
 		false
 	);
@@ -638,7 +640,7 @@ const start = () => {
 			clearTimeout(scrollTimerId);
 			scrollTimerId = 0;
 
-			scrollTimerId = setTimeout(() => {
+			scrollTimerId = window.setTimeout(() => {
 				isScroll = false;
 			}, 350);
 		},
