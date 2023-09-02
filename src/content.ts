@@ -1,47 +1,4 @@
-"use strict";
-
-const getPointerElement = (element, checkHref = false, savedLinkElement = undefined) => {
-	if (
-		element.parentElement !== null &&
-		getComputedStyle(element.parentElement).getPropertyValue("cursor") === "pointer"
-	) {
-		// aタグのhrefが違う場合、内側のhrefを採用するかどうか
-		if (checkHref) {
-			// 対象の要素にhrefがある時
-			if (element.href !== undefined) {
-				// 対象の要素にあるhrefと記録されている最後のhrefが違う時は記録されている最後のhrefを返す
-				if (savedLinkElement?.href !== undefined && element.href !== savedLinkElement.href) {
-					return savedLinkElement;
-				}
-
-				// 対象の要素にあるhrefと記録されている最後のhrefが一致、もしくは要素が記録されていない場合は対象の要素を記録して実行
-				return getPointerElement(element.parentElement, checkHref, element);
-			}
-
-			// 対象の要素にhrefがない時は記録されている要素をそのまま残し実行
-			return getPointerElement(element.parentElement, checkHref, savedLinkElement);
-		} else {
-			return getPointerElement(element.parentElement);
-		}
-	}
-
-	// aタグのhrefが違う時は内側のhrefを採用する場合
-	if (checkHref) {
-		// 記録している要素のhrefが存在する場合だけ処理
-		if (savedLinkElement?.href !== undefined) {
-			// 対象の要素にhrefがない場合、もしくは対象の要素と記録している要素のhrefが一致していない場合は記録している要素を返す
-			if (element.href === undefined) {
-				return savedLinkElement;
-			} else if (element.href !== savedLinkElement.href) {
-				return savedLinkElement;
-			}
-		}
-	}
-
-	return element;
-};
-
-let shapeColor = "#fff9c4";
+import { getPointerElement } from "./lib";
 
 const start = () => {
 	const cursor = document.createElement("span");
@@ -102,17 +59,14 @@ const start = () => {
 	const changeStyle = document.createElement("style");
 	document.body.appendChild(changeStyle);
 
-	// let transform = ""; // 遷移時の形状記憶用変数
-	// let toAnimationName = ""; //遷移時のアニメーション用変数
-	let shapeStatus = "normal"; // 四角いのの状態記憶用変数
-
 	// 遷移アニメーション終了時の処理
+	let isToAnimationEnd = true;
 	cursor.addEventListener("animationend", () => {
 		isToAnimationEnd = true;
 	});
 
-	let target = null;
-	let pointerTarget = null; // ポインター時のターゲット
+	let target: HTMLElement | null = null;
+	let pointerTarget: HTMLElement | null = null; // ポインター時のターゲット
 	let clientX = 0;
 	let clientY = 0;
 	let oldClientX = clientX;
@@ -127,9 +81,8 @@ const start = () => {
 	let cursorInWindow = true; // カーソルが画面内かどうか
 	let activeFrame = false; // 現在のフレームにカーソルがあるかどうか
 	let pointerMode = "2"; // ポインター状態のモード
-	let isToAnimationEnd = true;
-	let beforeTransitionShapeRotate = null; // 遷移前の角度
-	let beforeTransitionShapeTransform = null; // 遷移前の変形
+	let beforeTransitionShapeRotate: number | null = null; // 遷移前の角度
+	let beforeTransitionShapeTransform: number | null = null; // 遷移前の変形
 	const pointer = () => {
 		// backgroundと通信
 		if (sendBGMessageCount > 10) {
@@ -175,9 +128,9 @@ const start = () => {
 		//  カーソルがウィンドウの中にいる
 		//  カーソルが一定時間放置されていない
 		if (activeFrame && cursorInWindow && !cursorAfk && target !== null) {
-			cursor.style.opacity = 1;
+			cursor.style.opacity = "1";
 		} else {
-			cursor.style.opacity = 0;
+			cursor.style.opacity = "0";
 
 			requestAnimationFrame(pointer);
 
@@ -207,10 +160,14 @@ const start = () => {
 			overrideShapeStatus = "normal";
 		}
 
-		// スクロール中はノーマルモード
+		// スクロール中の処理
 		if (isScroll) {
-			shapeStatus = "normal";
-			overrideShapeStatus = "normal";
+			if (shapeStatus === "pointer") {
+				if (pointerMode === "1" || pointerMode === "4") {
+					shapeStatus = "normal";
+					overrideShapeStatus = "normal";
+				}
+			}
 		}
 
 		if (shapeStatus === "pointer") {

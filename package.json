@@ -2,14 +2,20 @@
 	"name": "rectangle-follows-cursor",
 	"version": "4.0.1",
 	"private": true,
+	"type": "module",
 	"scripts": {
+		"build": "tsc && vite build",
+		"preview": "vite preview",
 		"lint": "eslint './src/**/*.{js,jsx,ts,tsx}'",
 		"lint:fix": "npm run lint -- --fix; prettier --write './**/*'"
 	},
-	"dependencies": {},
 	"devDependencies": {
+		"@types/chrome": "^0.0.244",
+		"@typescript-eslint/parser": "^6.5.0",
 		"eslint": "^8.45.0",
 		"eslint-config-prettier": "^8.8.0",
-		"prettier": "^2.8.8"
+		"prettier": "^2.8.8",
+		"typescript": "^5.0.2",
+		"vite": "^4.4.5"
 	}
 }
