@@ -1,6 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const input = process.argv[4]?.split("=")?.[1];
+if (input) {
+	console.log("Single building: " + input);
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [react()],
@@ -12,19 +17,15 @@ export default defineConfig({
 	root: "./src/",
 	build: {
 		outDir: "../dist/",
-		emptyOutDir: true,
+		emptyOutDir: false,
 		rollupOptions: {
 			output: {
 				entryFileNames: "[name].js",
 				chunkFileNames: "[name].js",
-				assetFileNames: "[name].[ext]"
+				assetFileNames: "[name].[ext]",
+				inlineDynamicImports: true
 			},
-			input: {
-				option: "./src/option.html",
-				demo: "./src/demo.html",
-				background: "./src/background.ts",
-				content: "./src/content.ts"
-			}
+			input: input
 		}
 	}
 });

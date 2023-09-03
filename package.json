@@ -2,9 +2,8 @@
 	"name": "rectangle-follows-cursor",
 	"version": "5.0.0",
 	"private": true,
-	"type": "module",
 	"scripts": {
-		"build": "tsc && vite build",
+		"build": "rm -rf ./dist/* && tsc && printf './src/option.html ./src/content.ts ./src/demo.html' ./src/background.ts | xargs -d ' ' -P0 -I% vite build -- --input=%",
 		"preview": "vite preview",
 		"lint": "eslint './src/**/*.{js,jsx,ts,tsx}'",
 		"lint:fix": "npm run lint -- --fix; prettier --write './**/*'"
