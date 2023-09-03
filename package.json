@@ -1,6 +1,6 @@
 {
 	"name": "rectangle-follows-cursor",
-	"version": "4.0.1",
+	"version": "5.0.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -14,7 +14,8 @@
 		"@emotion/styled": "^11.11.0",
 		"@mui/material": "^5.14.2",
 		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
+		"react-dom": "^18.2.0",
+		"aki-modules": "github:AkimeAki/Modules#2.0.0"
 	},
 	"devDependencies": {
 		"@types/chrome": "^0.0.244",

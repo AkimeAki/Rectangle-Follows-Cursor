@@ -1,10 +1,13 @@
 import { getPointerElement } from "@/lib";
+import { normalShape } from "@/shape/normal";
+import { pointer1 } from "@/shape/pointer-1";
+import { pointer2 } from "@/shape/pointer-2";
+import { pointer4 } from "@/shape/pointer-4";
+import { hash, className, pointerMode } from "@/define";
+import type { BeforeTransitionShape, ShapeTransform } from "@/interface";
 
-let shapeColor = "#fff9c4";
-const start = () => {
+const start = (shapeColor = "#fff9c4") => {
 	const cursor = document.createElement("span");
-	const hash = Date.now();
-	const className = `behind-cursor-${hash}`;
 	cursor.classList.add(className);
 	document.body.appendChild(cursor);
 
@@ -61,9 +64,9 @@ const start = () => {
 	document.body.appendChild(changeStyle);
 
 	// 遷移アニメーション終了時の処理
-	let isToAnimationEnd = true;
+	let isTransitionAnimationEnd = true;
 	cursor.addEventListener("animationend", () => {
-		isToAnimationEnd = true;
+		isTransitionAnimationEnd = true;
 	});
 
 	let shapeStatus: "normal" | "pointer" = "normal";
@@ -82,9 +85,10 @@ const start = () => {
 	let cursorAfk = true; // カーソルを放置しているかどうか
 	let cursorInWindow = true; // カーソルが画面内かどうか
 	let activeFrame = false; // 現在のフレームにカーソルがあるかどうか
-	let pointerMode: "1" | "2" | "3" | "4" = "2"; // ポインター状態のモード
-	let beforeTransitionShapeRotate: number | null = null; // 遷移前の角度
-	let beforeTransitionShapeTransform: number | null = null; // 遷移前の変形
+	const beforeTransitionShape: BeforeTransitionShape = {
+		rotate: null, // 遷移前の角度
+		transform: null // 遷移前の変形
+	};
 	const pointer = () => {
 		// backgroundと通信
 		if (sendBGMessageCount > 10) {
@@ -139,450 +143,82 @@ const start = () => {
 			return;
 		}
 
-		// 四角いのの描画位置
-		let shapeX = 0;
-		let shapeY = 0;
 		const currentRotate = Number(getComputedStyle(cursor).getPropertyValue("rotate").replace("deg", ""));
 
-		let overrideShapeStatus = null; // 強制的にステータスを変更した場合のステータス
-
-		if (shapeStatus === "pointer" && (pointerMode === "1" || pointerMode === "4") && pointerTarget !== null) {
-			pointerTarget = getPointerElement(pointerTarget, true);
-
-			const rect = pointerTarget.getBoundingClientRect();
-			if (rect.right - rect.left <= 1 || rect.bottom - rect.top <= 1) {
-				shapeStatus = "normal";
-				overrideShapeStatus = "normal";
-			}
+		if (beforeTransitionShape.rotate === null) {
+			beforeTransitionShape.rotate = currentRotate;
 		}
 
-		// ポインターモード3は常にノーマルモード
-		if (pointerMode === "3") {
-			shapeStatus = "normal";
-			overrideShapeStatus = "normal";
+		if (beforeTransitionShape.transform === null) {
+			beforeTransitionShape.transform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
 		}
 
-		// スクロール中の処理
-		if (isScroll) {
-			if (shapeStatus === "pointer") {
-				if (pointerMode === "1" || pointerMode === "4") {
-					shapeStatus = "normal";
-					overrideShapeStatus = "normal";
-				}
-			}
-		}
-
-		if (shapeStatus === "pointer" && pointerTarget !== null) {
-			if (pointerMode === "1") {
-				const margin = 5;
-				const pointerTargetRect = pointerTarget.getBoundingClientRect();
-				let targetLeft = pointerTargetRect.left;
-				let targetTop = pointerTargetRect.top;
-				let targetBottom = pointerTargetRect.bottom;
-				let targetRight = pointerTargetRect.right;
-
-				const checkChildren = (parent: HTMLElement) => {
-					if (Array.from(parent.children).length === 0) {
-						return;
+		const {
+			x: shapeX,
+			y: shapeY,
+			style: shapeTransformStyle
+		} = ((): ShapeTransform => {
+			if (shapeStatus === "pointer" && pointerTarget !== null) {
+				if (pointerMode === "1") {
+					if (isScroll) {
+						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
-					if (getComputedStyle(parent).getPropertyValue("overflow") === "hidden") {
-						return;
+					pointerTarget = getPointerElement(pointerTarget, true);
+
+					const rect = pointerTarget.getBoundingClientRect();
+					if (rect.right - rect.left <= 1 || rect.bottom - rect.top <= 1) {
+						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
-					Array.from(parent.children).forEach((element) => {
-						if (Array.from(element.children).length !== 0) {
-							checkChildren(element as HTMLElement);
-						}
-
-						if (getComputedStyle(element).getPropertyValue("display") === "none") {
-							return;
-						}
-
-						const childRect = element.getBoundingClientRect();
-						const childWidth = childRect.right - childRect.left;
-						const childHeight = childRect.bottom - childRect.top;
-
-						if (targetBottom < childRect.bottom && childWidth !== 0 && childHeight !== 0) {
-							targetBottom = childRect.bottom;
-						}
-
-						if (targetRight < childRect.right && childWidth !== 0 && childHeight !== 0) {
-							targetRight = childRect.right;
-						}
-
-						if (targetTop > childRect.top && childWidth !== 0 && childHeight !== 0) {
-							targetTop = childRect.top;
-						}
-
-						if (targetLeft > childRect.left && childWidth !== 0 && childHeight !== 0) {
-							targetLeft = childRect.left;
-						}
-					});
-				};
-
-				checkChildren(pointerTarget);
-
-				const width = targetRight - targetLeft + margin * 2;
-				const height = targetBottom - targetTop + margin * 2;
-
-				if (!isToAnimationEnd) {
-					// 遷移アニメーション
-
-					if (beforeTransitionShapeRotate === null) {
-						beforeTransitionShapeRotate = currentRotate;
+					return pointer1(pointerTarget, isTransitionAnimationEnd, beforeTransitionShape);
+				} else if (pointerMode === "2") {
+					return pointer2(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
+				} else if (pointerMode === "3") {
+					return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
+				} else if (pointerMode === "4") {
+					if (isScroll) {
+						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
-					if (beforeTransitionShapeTransform === null) {
-						beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
+					pointerTarget = getPointerElement(pointerTarget, true);
+
+					const rect = pointerTarget.getBoundingClientRect();
+					if (rect.right - rect.left <= 1 || rect.bottom - rect.top <= 1) {
+						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
-					const style = /* css */ `
-						.${className} {
-							width: ${width}px;
-							height: ${height}px;
-							transition-duration: 200ms;
-							animation-name: to-pointer-${hash};
-							animation-duration: 200ms;
-							animation-iteration-count: 1;
-							animation-timing-function: linear;
-						}
-
-						@keyframes to-pointer-${hash} {
-							from {
-								transform: ${beforeTransitionShapeTransform};
-								rotate: ${beforeTransitionShapeRotate}deg;
-							}
-
-							to {
-								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
-								transform: skew(0);
-							}
-						}
-					`;
-
-					if (changeStyle.innerHTML !== style) {
-						changeStyle.innerHTML = style;
-					}
-				} else {
-					// 遷移アニメーション終了後
-
-					beforeTransitionShapeRotate = null;
-					beforeTransitionShapeTransform = null;
-
-					const style = /* css */ `
-						.${className} {
-							width: ${width}px;
-							height: ${height}px;
-							rotate: 0deg;
-							transform: skew(0);
-							transition-duration: 200ms;
-							animation-name: none;
-						}
-					`;
-
-					if (changeStyle.innerHTML !== style) {
-						changeStyle.innerHTML = style;
-					}
-				}
-
-				shapeX = targetLeft - margin;
-				shapeY = targetTop - margin;
-			} else if (pointerMode === "2") {
-				if (!isToAnimationEnd) {
-					// 遷移アニメーション
-
-					if (beforeTransitionShapeRotate === null) {
-						beforeTransitionShapeRotate = currentRotate;
-					}
-
-					if (beforeTransitionShapeTransform === null) {
-						beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
-					}
-
-					const style = /* css */ `
-						.${className} {
-							width: 50px;
-							height: 50px;
-							transition-duration: 200ms;
-							animation-name: to-pointer-${hash};
-							animation-duration: 200ms;
-							animation-iteration-count: 1;
-							animation-timing-function: linear;
-						}
-
-						@keyframes to-pointer-${hash} {
-							from {
-								transform: ${beforeTransitionShapeTransform};
-								rotate: ${beforeTransitionShapeRotate}deg;
-							}
-
-							to {
-								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
-								transform: skew(0);
-							}
-						}
-					`;
-
-					if (changeStyle.innerHTML !== style) {
-						changeStyle.innerHTML = style;
-					}
-				} else {
-					// 遷移アニメーション終了後
-
-					beforeTransitionShapeRotate = null;
-					beforeTransitionShapeTransform = null;
-
-					const style = /* css */ `
-						.${className} {
-							transform: skew(0);
-							width: 50px;
-							height: 50px;
-							transition-duration: 200ms;
-							animation-name: pointer-${hash};
-							animation-duration: 800ms;
-							animation-iteration-count: infinite;
-							animation-timing-function: linear;
-							animation-direction: normal
-						}
-
-						@keyframes pointer-${hash} {
-							from {
-								rotate: 0deg;
-							}
-
-							to {
-								rotate: 90deg;
-							}
-						}
-					`;
-					if (changeStyle.innerHTML !== style) {
-						changeStyle.innerHTML = style;
-					}
-				}
-
-				// ポインターモードの時はカーソルに近づける
-				shapeX = clientX - cursor.clientWidth / 2;
-				shapeY = clientY - cursor.clientHeight / 2;
-			} else if (pointerMode === "4") {
-				const margin = 5;
-				const pointerTargetRect = pointerTarget.getBoundingClientRect();
-				let targetLeft = pointerTargetRect.left;
-				let targetTop = pointerTargetRect.top;
-				let targetBottom = pointerTargetRect.bottom;
-				let targetRight = pointerTargetRect.right;
-
-				const checkChildren = (parent: HTMLElement) => {
-					if (Array.from(parent.children).length === 0) {
-						return;
-					}
-
-					if (getComputedStyle(parent).getPropertyValue("overflow") === "hidden") {
-						return;
-					}
-
-					Array.from(parent.children).forEach((element) => {
-						if (Array.from(element.children).length !== 0) {
-							checkChildren(element as HTMLElement);
-						}
-
-						if (getComputedStyle(element).getPropertyValue("display") === "none") {
-							return;
-						}
-
-						const childRect = element.getBoundingClientRect();
-						const childWidth = childRect.right - childRect.left;
-						const childHeight = childRect.bottom - childRect.top;
-
-						if (targetBottom < childRect.bottom && childWidth !== 0 && childHeight !== 0) {
-							targetBottom = childRect.bottom;
-						}
-
-						if (targetRight < childRect.right && childWidth !== 0 && childHeight !== 0) {
-							targetRight = childRect.right;
-						}
-
-						if (targetTop > childRect.top && childWidth !== 0 && childHeight !== 0) {
-							targetTop = childRect.top;
-						}
-
-						if (targetLeft > childRect.left && childWidth !== 0 && childHeight !== 0) {
-							targetLeft = childRect.left;
-						}
-					});
-				};
-
-				checkChildren(pointerTarget);
-
-				const width = targetRight - targetLeft + margin * 2;
-				const height = targetBottom - targetTop + margin * 2;
-
-				if (!isToAnimationEnd) {
-					// 遷移アニメーション
-
-					if (beforeTransitionShapeRotate === null) {
-						beforeTransitionShapeRotate = currentRotate;
-					}
-
-					if (beforeTransitionShapeTransform === null) {
-						beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
-					}
-
-					const style = /* css */ `
-						.${className} {
-							width: ${width}px;
-							height: ${height}px;
-							translate: -50% -50%;
-							transition: width 400ms, height 400ms, top 200ms, left 200ms;
-							animation-name: to-pointer-${hash};
-							animation-duration: 400ms;
-							animation-iteration-count: 1;
-							animation-timing-function: linear;
-						}
-
-						@keyframes to-pointer-${hash} {
-							0% {
-								transform: ${beforeTransitionShapeTransform};
-								rotate: ${beforeTransitionShapeRotate}deg;
-							}
-
-							10% {
-								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
-								transform: skew(0);
-							}
-
-							100% {
-								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180}deg;
-								transform: skew(0);
-							}
-						}
-					`;
-
-					if (changeStyle.innerHTML !== style) {
-						changeStyle.innerHTML = style;
-					}
-				} else {
-					// 遷移アニメーション終了後
-
-					beforeTransitionShapeRotate = null;
-					beforeTransitionShapeTransform = null;
-
-					const style = /* css */ `
-						.${className} {
-							width: ${width}px;
-							height: ${height}px;
-							translate: -50% -50%;
-							rotate: 0deg;
-							transform: skew(0);
-							transition-duration: 200ms;
-							animation-name: none;
-						}
-					`;
-
-					if (changeStyle.innerHTML !== style) {
-						changeStyle.innerHTML = style;
-					}
-				}
-
-				shapeX = targetLeft + (targetRight - targetLeft) / 2;
-				shapeY = targetTop + (targetBottom - targetTop) / 2;
-			}
-		} else if (shapeStatus === "normal") {
-			if (!isToAnimationEnd) {
-				if (beforeTransitionShapeRotate === null) {
-					beforeTransitionShapeRotate = currentRotate;
-				}
-
-				if (beforeTransitionShapeTransform === null) {
-					beforeTransitionShapeTransform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
-				}
-
-				// 遷移アニメーション
-
-				let style = "";
-				if (pointerMode === "4") {
-					style = /* css */ `
-						.${className} {
-							translate: -50% -50%;
-							transition-timing-function: ease-out;
-							transition: width 200ms, height 200ms, top 400ms, left 400ms;
-							animation-name: to-normal-${hash};
-							animation-duration: 400ms;
-							animation-iteration-count: 1;
-							animation-timing-function: ease-out;
-						}
-
-						@keyframes to-normal-${hash} {
-							0% {
-								transform: ${beforeTransitionShapeTransform};
-								rotate: ${beforeTransitionShapeRotate}deg;
-							}
-
-							50% {
-								transform: ${beforeTransitionShapeTransform};
-								rotate: ${beforeTransitionShapeRotate}deg;
-							}
-
-							100% {
-								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180 + 45 + 180}deg;;
-								transform: skew(20deg, 20deg);
-							}
-						}
-					`;
-				} else {
-					style = /* css */ `
-						.${className} {
-							transition-duration: 400ms;
-							transition-timing-function: ease-out;
-							animation-name: to-normal-${hash};
-							animation-duration: 500ms;
-							animation-iteration-count: 1;
-							animation-timing-function: ease-out;
-						}
-
-						@keyframes to-normal-${hash} {
-							from {
-								transform: ${beforeTransitionShapeTransform};
-								rotate: ${beforeTransitionShapeRotate}deg;
-							}
-
-							to {
-								rotate: ${Math.round(beforeTransitionShapeRotate / 180) * 180 + 45 + 180}deg;;
-								transform: skew(20deg, 20deg);
-							}
-						}
-					`;
-				}
-
-				if (changeStyle.innerHTML !== style) {
-					changeStyle.innerHTML = style;
-				}
-			} else {
-				// 遷移アニメーション終了後
-
-				beforeTransitionShapeRotate = null;
-				beforeTransitionShapeTransform = null;
-				if (changeStyle.innerHTML !== "") {
-					changeStyle.innerHTML = "";
+					return pointer4(pointerTarget, isTransitionAnimationEnd, beforeTransitionShape);
 				}
 			}
 
-			shapeX = clientX + 27;
-			shapeY = clientY + 27;
-		}
+			return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
+		})();
+
+		Object.keys(beforeTransitionShape).forEach((beforeStyle) => {
+			const style = beforeStyle as keyof BeforeTransitionShape;
+			if (beforeTransitionShape[style] === null) {
+				beforeTransitionShape[style] = null;
+			}
+		});
 
 		// 追従
 		cursor.style.top = `${shapeY}px`;
 		cursor.style.left = `${shapeX}px`;
 
-		if (getComputedStyle(target).cursor === "pointer") {
+		// スタイル変更
+		if (changeStyle.innerHTML !== shapeTransformStyle) {
+			changeStyle.innerHTML = shapeTransformStyle;
+		}
+
+		if (getComputedStyle(target).cursor === "pointer" && pointerMode !== "3") {
 			// カーソルがポインターなのでノーマル状態に遷移するまでのタイマーをリセット
 			clearTimeout(toNormalShapeTimerId);
 			toNormalShapeTimerId = 0;
 			pointerTarget = target;
 
-			if (shapeStatus !== "pointer" && overrideShapeStatus === null) {
-				isToAnimationEnd = false;
+			if (shapeStatus !== "pointer") {
+				isTransitionAnimationEnd = false;
 			}
 
 			// 四角いのをポインター状態にする
@@ -591,7 +227,7 @@ const start = () => {
 			if (toNormalShapeTimerId === 0) {
 				toNormalShapeTimerId = window.setTimeout(() => {
 					if (shapeStatus !== "normal") {
-						isToAnimationEnd = false;
+						isTransitionAnimationEnd = false;
 					}
 
 					// 四角いのをノーマル状態にする
@@ -657,21 +293,9 @@ const start = () => {
 		}
 	});
 
-	chrome.storage.sync.get(["pointerMode"], (value) => {
-		if (value.pointerMode !== undefined) {
-			pointerMode = value.pointerMode;
-		}
-	});
-
 	pointer();
 };
 
-(() => {
-	chrome.storage.sync.get(["shapeColor"], (value) => {
-		if (value.shapeColor !== undefined) {
-			shapeColor = value.shapeColor;
-		}
-
-		start();
-	});
-})();
+chrome.storage.sync.get(["shapeColor"], (value) => {
+	start(value.shapeColor);
+});

@@ -46,3 +46,60 @@ export const getPointerElement = (
 
 	return element;
 };
+
+export const checkMaxRect = (
+	parent: HTMLElement,
+	top?: number,
+	bottom?: number,
+	right?: number,
+	left?: number
+): { top: number; bottom: number; left: number; right: number } => {
+	const parentRect = parent.getBoundingClientRect();
+	let elementTop = top ?? parentRect.top;
+	let elementBottom = bottom ?? parentRect.bottom;
+	let elementLeft = left ?? parentRect.left;
+	let elementRight = right ?? parentRect.right;
+
+	if (
+		Array.from(parent.children).length === 0 ||
+		getComputedStyle(parent).getPropertyValue("overflow") === "hidden"
+	) {
+		return { top: elementTop, bottom: elementBottom, left: elementLeft, right: elementRight };
+	}
+
+	Array.from(parent.children).forEach((element) => {
+		if (Array.from(element.children).length !== 0) {
+			const rect = checkMaxRect(element as HTMLElement, elementTop, elementBottom, elementLeft, elementRight);
+			elementTop = rect.top;
+			elementBottom = rect.bottom;
+			elementLeft = rect.left;
+			elementRight = rect.right;
+		}
+
+		if (getComputedStyle(element).getPropertyValue("display") === "none") {
+			return;
+		}
+
+		const childRect = element.getBoundingClientRect();
+		const childWidth = childRect.right - childRect.left;
+		const childHeight = childRect.bottom - childRect.top;
+
+		if (elementBottom < childRect.bottom && childWidth !== 0 && childHeight !== 0) {
+			elementBottom = childRect.bottom;
+		}
+
+		if (elementRight < childRect.right && childWidth !== 0 && childHeight !== 0) {
+			elementRight = childRect.right;
+		}
+
+		if (elementTop > childRect.top && childWidth !== 0 && childHeight !== 0) {
+			elementTop = childRect.top;
+		}
+
+		if (elementLeft > childRect.left && childWidth !== 0 && childHeight !== 0) {
+			elementLeft = childRect.left;
+		}
+	});
+
+	return { top: elementTop, bottom: elementBottom, left: elementLeft, right: elementRight };
+};

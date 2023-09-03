@@ -4,6 +4,7 @@ ps:
 
 .PHONY: コンテナ起動
 up:
+	@make down
 	docker compose build --no-cache
 	docker compose up -d
 

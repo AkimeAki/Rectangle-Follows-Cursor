@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import Option from "./Option";
+import Demo from "./Demo";
 import "aki-modules/reset.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
-		<Option />
+		<Demo />
 	</React.StrictMode>
 );

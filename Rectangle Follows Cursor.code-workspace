@@ -47,6 +47,6 @@
 			"editor.formatOnSave": true,
 			"editor.defaultFormatter": "esbenp.prettier-vscode"
 		},
-		"cSpell.words": ["bierner", "dbaeumer", "dockercompose", "esbenp", "webextensions"]
+		"cSpell.words": ["Akime", "bierner", "dbaeumer", "dockercompose", "esbenp", "webextensions"]
 	}
 }

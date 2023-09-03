@@ -21,6 +21,7 @@ export default defineConfig({
 			},
 			input: {
 				option: "./src/option.html",
+				demo: "./src/demo.html",
 				background: "./src/background.ts",
 				content: "./src/content.ts"
 			}
