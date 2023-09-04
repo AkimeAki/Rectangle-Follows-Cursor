@@ -7,3 +7,4 @@ package-lock.json
 /**/.gitignore
 /**/.prettierignore
 /src/icons/
+/**/*.png
