@@ -1,19 +1,17 @@
 import { hash, className } from "@/define";
-import { checkMaxRect } from "@/lib";
 import type { BeforeTransitionShape, ShapeTransform } from "@/interface";
 
 export const pointer1 = (
-	target: HTMLElement,
 	isTransitionAnimationEnd: boolean,
-	beforeTransitionShape: BeforeTransitionShape
+	beforeTransitionShape: BeforeTransitionShape,
+	rect: { top: number; bottom: number; left: number; right: number }
 ): ShapeTransform => {
 	let style = "";
 
 	const margin = 5;
 
-	const { top, bottom, left, right } = checkMaxRect(target);
-	const width = right - left + margin * 2;
-	const height = bottom - top + margin * 2;
+	const width = rect.right - rect.left + margin * 2;
+	const height = rect.bottom - rect.top + margin * 2;
 
 	if (!isTransitionAnimationEnd) {
 		// 遷移アニメーション
@@ -56,7 +54,7 @@ export const pointer1 = (
 		`;
 	}
 
-	const shapeX = left - margin;
-	const shapeY = top - margin;
+	const shapeX = rect.left - margin;
+	const shapeY = rect.top - margin;
 	return { x: shapeX, y: shapeY, style };
 };

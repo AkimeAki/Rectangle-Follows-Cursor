@@ -1,4 +1,4 @@
-import { getPointerElement } from "@/lib";
+import { checkMaxRect, getPointerElement } from "@/lib";
 import { normalShape } from "@/shape/normal";
 import { pointer1 } from "@/shape/pointer-1";
 import { pointer2 } from "@/shape/pointer-2";
@@ -85,6 +85,8 @@ const start = (shapeColor = "#fff9c4") => {
 	let cursorAfk = true; // カーソルを放置しているかどうか
 	let cursorInWindow = true; // カーソルが画面内かどうか
 	let activeFrame = false; // 現在のフレームにカーソルがあるかどうか
+	let oldWidth = 0;
+	let oldHeight = 0;
 	const beforeTransitionShape: BeforeTransitionShape = {
 		rotate: null, // 遷移前の角度
 		transform: null // 遷移前の変形
@@ -153,6 +155,7 @@ const start = (shapeColor = "#fff9c4") => {
 			beforeTransitionShape.transform = getComputedStyle(cursor).getPropertyValue("transform");
 		}
 
+		let override = false;
 		const {
 			x: shapeX,
 			y: shapeY,
@@ -160,35 +163,53 @@ const start = (shapeColor = "#fff9c4") => {
 		} = ((): ShapeTransform => {
 			if (shapeStatus === "pointer" && pointerTarget !== null) {
 				if (pointerMode === "1") {
-					if (isScroll) {
-						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
-					}
-
 					pointerTarget = getPointerElement(pointerTarget, true);
 
 					const rect = pointerTarget.getBoundingClientRect();
 					if (rect.right - rect.left <= 1 || rect.bottom - rect.top <= 1) {
+						override = true;
 						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
-					return pointer1(pointerTarget, isTransitionAnimationEnd, beforeTransitionShape);
+					const maxRect = checkMaxRect(pointerTarget);
+					const width = maxRect.right - maxRect.left;
+					const height = maxRect.bottom - maxRect.top;
+
+					if (isScroll && width !== oldWidth && height !== oldHeight) {
+						override = true;
+						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
+					}
+
+					oldWidth = width;
+					oldHeight = height;
+
+					return pointer1(isTransitionAnimationEnd, beforeTransitionShape, maxRect);
 				} else if (pointerMode === "2") {
 					return pointer2(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 				} else if (pointerMode === "3") {
 					return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 				} else if (pointerMode === "4") {
-					if (isScroll) {
-						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
-					}
-
 					pointerTarget = getPointerElement(pointerTarget, true);
 
 					const rect = pointerTarget.getBoundingClientRect();
 					if (rect.right - rect.left <= 1 || rect.bottom - rect.top <= 1) {
+						override = true;
 						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
-					return pointer4(pointerTarget, isTransitionAnimationEnd, beforeTransitionShape);
+					const maxRect = checkMaxRect(pointerTarget);
+					const width = maxRect.right - maxRect.left;
+					const height = maxRect.bottom - maxRect.top;
+
+					if (isScroll && width !== oldWidth && height !== oldHeight) {
+						override = true;
+						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
+					}
+
+					oldWidth = width;
+					oldHeight = height;
+
+					return pointer4(isTransitionAnimationEnd, beforeTransitionShape, maxRect);
 				}
 			}
 
@@ -219,7 +240,7 @@ const start = (shapeColor = "#fff9c4") => {
 			toNormalShapeTimerId = 0;
 			pointerTarget = target;
 
-			if (shapeStatus !== "pointer") {
+			if (shapeStatus !== "pointer" && !override) {
 				isTransitionAnimationEnd = false;
 			}
 

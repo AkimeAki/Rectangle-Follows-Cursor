@@ -51,8 +51,8 @@ export const checkMaxRect = (
 	parent: HTMLElement,
 	top?: number,
 	bottom?: number,
-	right?: number,
-	left?: number
+	left?: number,
+	right?: number
 ): { top: number; bottom: number; left: number; right: number } => {
 	const parentRect = parent.getBoundingClientRect();
 	let elementTop = top ?? parentRect.top;
@@ -67,7 +67,7 @@ export const checkMaxRect = (
 		return { top: elementTop, bottom: elementBottom, left: elementLeft, right: elementRight };
 	}
 
-	Array.from(parent.children).forEach((element) => {
+	Array.from(parent.children).some((element) => {
 		if (Array.from(element.children).length !== 0) {
 			const rect = checkMaxRect(element as HTMLElement, elementTop, elementBottom, elementLeft, elementRight);
 			elementTop = rect.top;
@@ -77,7 +77,7 @@ export const checkMaxRect = (
 		}
 
 		if (getComputedStyle(element).getPropertyValue("display") === "none") {
-			return;
+			return true;
 		}
 
 		const childRect = element.getBoundingClientRect();
