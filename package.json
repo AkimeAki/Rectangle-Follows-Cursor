@@ -3,7 +3,7 @@
 	"version": "5.0.0",
 	"private": true,
 	"scripts": {
-		"build": "rm -rf ./dist/* && tsc && printf './src/option.html ./src/content.ts ./src/demo.html' ./src/background.ts | xargs -d ' ' -P0 -I% vite build -- --input=%",
+		"build": "rm -rf ./dist/* && tsc && printf './src/option.html ./src/content.ts ./src/demo.html ./src/background.ts' | xargs -d ' ' -P0 -I % vite build -- --input=%",
 		"preview": "vite preview",
 		"lint": "eslint './src/**/*.{js,jsx,ts,tsx}'",
 		"lint:fix": "npm run lint -- --fix; prettier --write './**/*'"
