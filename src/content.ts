@@ -150,7 +150,7 @@ const start = (shapeColor = "#fff9c4") => {
 		}
 
 		if (beforeTransitionShape.transform === null) {
-			beforeTransitionShape.transform = Number(getComputedStyle(cursor).getPropertyValue("transform"));
+			beforeTransitionShape.transform = getComputedStyle(cursor).getPropertyValue("transform");
 		}
 
 		const {
@@ -195,12 +195,14 @@ const start = (shapeColor = "#fff9c4") => {
 			return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 		})();
 
-		Object.keys(beforeTransitionShape).forEach((beforeStyle) => {
-			const style = beforeStyle as keyof BeforeTransitionShape;
-			if (beforeTransitionShape[style] === null) {
-				beforeTransitionShape[style] = null;
-			}
-		});
+		if (isTransitionAnimationEnd) {
+			Object.keys(beforeTransitionShape).forEach((beforeStyle) => {
+				const style = beforeStyle as keyof BeforeTransitionShape;
+				if (beforeTransitionShape[style] !== null) {
+					beforeTransitionShape[style] = null;
+				}
+			});
+		}
 
 		// 追従
 		cursor.style.top = `${shapeY}px`;

@@ -6,5 +6,5 @@ export interface ShapeTransform {
 
 export interface BeforeTransitionShape {
 	rotate: null | number;
-	transform: null | number;
+	transform: null | string;
 }
