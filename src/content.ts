@@ -177,6 +177,8 @@ const start = (shapeColor = "#fff9c4") => {
 
 					if (isScroll && width !== oldWidth && height !== oldHeight) {
 						override = true;
+						oldWidth = 0;
+						oldHeight = 0;
 						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
@@ -203,6 +205,8 @@ const start = (shapeColor = "#fff9c4") => {
 
 					if (isScroll && width !== oldWidth && height !== oldHeight) {
 						override = true;
+						oldWidth = 0;
+						oldHeight = 0;
 						return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 					}
 
@@ -213,6 +217,8 @@ const start = (shapeColor = "#fff9c4") => {
 				}
 			}
 
+			oldWidth = 0;
+			oldHeight = 0;
 			return normalShape(clientX, clientY, isTransitionAnimationEnd, beforeTransitionShape);
 		})();
 
@@ -301,7 +307,7 @@ const start = (shapeColor = "#fff9c4") => {
 
 			scrollTimerId = window.setTimeout(() => {
 				isScroll = false;
-			}, 350);
+			}, 500);
 		},
 		false
 	);
