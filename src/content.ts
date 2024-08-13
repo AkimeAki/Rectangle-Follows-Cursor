@@ -326,5 +326,9 @@ const start = (shapeColor = "#fff9c4") => {
 };
 
 chrome.storage.sync.get(["shapeColor"], (value) => {
-	start(value.shapeColor);
+	const webkitXmlDiv = document.querySelector("#webkit-xml-viewer-source-xml");
+	const xmlViewerStyle = document.querySelector("#xml-viewer-style");
+	if (webkitXmlDiv === null || xmlViewerStyle === null) {
+		start(value.shapeColor);
+	}
 });

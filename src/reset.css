@@ -1,0 +1,65 @@
+@layer base {
+	* {
+		box-sizing: border-box;
+		padding: 0;
+		margin: 0;
+		font-family: "游ゴシック体", YuGothic, "游ゴシック", "メイリオ", Meiryo, "Hiragino Kaku Gothic Pro",
+			"ヒラギノ角ゴ Pro W3", "ＭＳ Ｐゴシック", sans-serif;
+		font-size: 18px;
+		line-height: 1.6;
+	}
+	*:focus {
+		outline: none;
+	}
+	:root {
+		background-color: #fff;
+	}
+	head,
+	meta,
+	title,
+	link,
+	style,
+	script {
+		display: none;
+	}
+	html,
+	body,
+	p,
+	div,
+	article,
+	aside,
+	footer,
+	header,
+	hgroup,
+	main,
+	nav,
+	section {
+		display: block;
+	}
+	html,
+	body {
+		width: 100%;
+		height: 100%;
+	}
+	ul,
+	ol {
+		padding-block-start: 0;
+		padding-block-end: 0;
+		padding-inline-start: 40px;
+		margin-inline-start: 0;
+		margin-inline-end: 0;
+	}
+	a {
+		color: #1976d2;
+	}
+	p {
+		margin-bottom: 10px;
+	}
+	p:last-of-type {
+		margin-bottom: 0;
+	}
+	img {
+		max-width: 100%;
+		height: auto;
+	}
+}

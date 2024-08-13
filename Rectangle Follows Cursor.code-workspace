@@ -46,7 +46,15 @@
 		"[css]": {
 			"editor.formatOnSave": true,
 			"editor.defaultFormatter": "esbenp.prettier-vscode"
-		},
-		"cSpell.words": ["Akime", "bierner", "dbaeumer", "dockercompose", "esbenp", "webextensions"]
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"dbaeumer.vscode-eslint",
+			"esbenp.prettier-vscode",
+			"EditorConfig.EditorConfig",
+			"ms-vscode-remote.remote-containers",
+			"bierner.comment-tagged-templates"
+		]
 	}
 }
