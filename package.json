@@ -1,6 +1,6 @@
 {
 	"name": "rectangle-follows-cursor",
-	"version": "5.0.1",
+	"version": "5.0.2",
 	"private": true,
 	"scripts": {
 		"build": "rm -rf ./dist/* && tsc && printf './src/option.html ./src/content.ts ./src/demo.html ./src/background.ts' | xargs -d ' ' -P0 -I % vite build -- --input=%",
